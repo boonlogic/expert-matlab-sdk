@@ -4,6 +4,8 @@ A Matlab library for clustering custom datasets through the BoonNano Cloud API
 
 ## Setup
 
+Requires Matlab 2018a or newer
+
 Add @BoonNanoSDK and @MatrixProvider to Matlab Path
 
 ## Usage
