@@ -12,7 +12,7 @@ end
 
 
 %% Create instance
-[success, instance_response] = bn.openNano('inst2');
+[success, instance_response] = bn.openNano('inst1');
 if ~success
     fprintf('Failed To Create New Instance \n');
 end
@@ -92,8 +92,13 @@ end
 
 
 %% Optionally Autotune Data
-%[success, autotune_response] = bn.autotuneConfig();
+[success, autotune_response] = bn.autotuneConfig();
 
+if success
+    fprintf('Autotune completed. PV = %.3f \n', autotune_response.percentVariation);
+else
+     fprintf('Autotune Failed \n');
+end
 
 
 

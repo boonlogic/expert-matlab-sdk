@@ -159,9 +159,6 @@ classdef BoonNanoSDK < handle
             end
 
             obj.instance = instance_id;
-            if ~isfield(obj.instance_config,obj.instance)
-                obj.instance_config.(obj.instance) = struct;
-            end
             
             success = true;
             return
@@ -511,7 +508,7 @@ classdef BoonNanoSDK < handle
             
             % build command
             tfs = {'false', 'true'};
-            config_cmd = [obj.url 'autoTuneConfig/' obj.instance '?api-tenant=' obj.api_tenant '?byFeature=' tfs{by_feature+1} '&autoTunePV=' tfs{autotune_pv+1} '&autoTuneRange=' tfs{autotune_range+1}];
+            config_cmd = [obj.url 'autoTuneConfig/' obj.instance '?api-tenant=' obj.api_tenant '&byFeature=' tfs{by_feature+1} '&autoTunePV=' tfs{autotune_pv+1} '&autoTuneRange=' tfs{autotune_range+1}];
             if ~isempty(exclusions)
                 config_cmd = [config_cmd '&exclusions=' exclusions];
             end
@@ -598,8 +595,11 @@ classdef BoonNanoSDK < handle
                 error('No Active Instances. Call openNano() first.');
             end
             if ~isfield(obj.instance_config, obj.instance) 
-                error('Active Instance %s Is Not Configured. Call configNano() first.'); 
+                error('Active Instance %s Is Not Configured. Call configNano() first.', obj.instance); 
             end
+            
+            %instance configurations
+            inst_config = obj.instance_config.(obj.instance);
             
             %format metadata
             if ~isempty(metadata)
@@ -608,12 +608,6 @@ classdef BoonNanoSDK < handle
                 metadata = strrep(metadata,'}','');
                 metadata = strrep(metadata,' ',''); 
             end
-            
-            %instance configurations
-            if ~isfield(obj.instance_config,obj.instance)
-                obj.instance_config.(obj.instance) = struct;
-            end
-            inst_config = obj.instance_config.(obj.instance);
             
             %check data dimensions
             [nsamples, nfeatures] = size(data);

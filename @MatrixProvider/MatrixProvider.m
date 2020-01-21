@@ -31,7 +31,7 @@ classdef MatrixProvider < matlab.net.http.io.ContentProvider & matlab.mixin.Copy
         % MatrixProvider MatrixProvider constructor
         %  PROVIDERS = MatrixProvider(data_matrix,data_type) constructs a MatrixProvider
         %    which sends one (2D) matrix to the server. Used by
-        %    BoonNanoSDK.
+        %    BoonNanoSDK. Data is provided as raw bytes to the server
         % Args:
         %   data_matrix (matrix): Data matrix to send to server
         %   data_type (char): Nano data type 'uint16', 'int16', or 'float32'
@@ -78,6 +78,8 @@ classdef MatrixProvider < matlab.net.http.io.ContentProvider & matlab.mixin.Copy
         %   [DATA, STOP] = getData(PROVIDER, LENGTH, FIRST) is an overridden method of
         %   ContentProvider that returns the next buffer of data from the dataset. It sets
         %   STOP to true if all bytes have been read.
+        %   Data matrix is converted to raw bytes (little endian) before
+        %   transmission.
         %
         % See also matlab.net.http.io.ContentProvider.getData
             if obj.NumElements == 0
