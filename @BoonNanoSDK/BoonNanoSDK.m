@@ -565,12 +565,11 @@ classdef BoonNanoSDK < handle
         %%%% Loading Data and Clustering
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
-        function [success, load_response] = loadData(obj, data, metadata, append_data)
-        % loadData: Post the data and cluster it if runNano is True
+        function [success, load_response] = loadData(obj, data, append_data)
+        % loadData: Post the data to the server
         % Args:
-        %   data (mat): Data to load #columns==config.feature_count
+        %   data (matrix): Data to load #columns==config.feature_count
         % Optional Args:
-        %   metadata (char): additional args (empty)
         %   append_data (bool): append this data to existing server data
         % Returns:
         %   success (bool): true if api call succesful
@@ -584,9 +583,6 @@ classdef BoonNanoSDK < handle
                 error('Must pass data matrix as argument'); 
             end
             if(nargin<3)
-                metadata='';
-            end
-            if(nargin<4)
                 append_data=false;
             end
             
@@ -601,14 +597,6 @@ classdef BoonNanoSDK < handle
             %instance configurations
             inst_config = obj.instance_config.(obj.instance);
             
-            %format metadata
-            if ~isempty(metadata)
-                metadata = strrep(metadata,',','|');
-                metadata = strrep(metadata,'{','');
-                metadata = strrep(metadata,'}','');
-                metadata = strrep(metadata,' ',''); 
-            end
-            
             %check data dimensions
             [nsamples, nfeatures] = size(data);
             if(nfeatures ~= inst_config.feature_count)
@@ -621,12 +609,7 @@ classdef BoonNanoSDK < handle
             
             %format multi part message
             mat_provider = MatrixProvider(data, inst_config.numeric_format);
-            if ~isempty(metadata)
-                str_provider = matlab.net.http.io.StringProvider(metadata);
-                multipart = matlab.net.http.io.MultipartFormProvider('data',mat_provider,'metadata',str_provider);
-            else
-                multipart = matlab.net.http.io.MultipartFormProvider('data',mat_provider);
-            end
+            multipart = matlab.net.http.io.MultipartFormProvider('data',mat_provider);
             header = matlab.net.http.HeaderField('x-token', obj.api_key,'Content-Type','multipart/form-data');
             req = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.POST,header,multipart);
             [load_response,completedrequest,~] = req.send(load_cmd);
@@ -650,7 +633,6 @@ classdef BoonNanoSDK < handle
         %         RI = raw anomaly index
         %         FI = frequency index
         %         DI = distance index
-        %         MD = metadata
         % Returns:
         %   success (bool)
         %   run_response (struct): response from server if success=true
@@ -661,7 +643,7 @@ classdef BoonNanoSDK < handle
                 results_str = 'ID,SI,RI,FI,DI';
             else
                 results_split = split(results,',');
-                valid = {'ID','SI','RI','FI','DI','MD'};
+                valid = {'ID','SI','RI','FI','DI'};
                 for i = 1:length(results_split) 
                    isin = contains(results_split(i),valid);
                    if(~any(isin(:)) )
@@ -703,7 +685,6 @@ classdef BoonNanoSDK < handle
         %         RI = raw anomaly index
         %         FI = frequency index
         %         DI = distance index
-        %         MD = metadata
         % Returns:
         %   success (bool):  true if successful 
         %   results_response [struct]: results when success is true, error message when success = false
@@ -718,7 +699,7 @@ classdef BoonNanoSDK < handle
                 results_str = 'ID,SI,RI,FI,DI';
             else
                 results_split = split(results,',');
-                valid = {'ID','SI','RI','FI','DI','MD'};
+                valid = {'ID','SI','RI','FI','DI'};
                 for i = 1:length(results_split) 
                    isin = contains(results_split(i),valid);
                    if(~any(isin(:)) )
