@@ -728,7 +728,7 @@ classdef BoonNanoSDK < handle
                    isin = contains(results_split(i),valid);
                    if(~any(isin(:)) )
                        success = false;
-                       error('unknown result %s found in results parameter', results_split(i));
+                       error('unknown result %s found in results parameter', string(results_split(i)));
                    end
                 end
                 results_str = results;
@@ -788,7 +788,7 @@ classdef BoonNanoSDK < handle
                    isin = contains(results_split(i),valid);
                    if(~any(isin(:)) )
                        success = false;
-                       error('unknown result %s found in results parameter', results_split(i));
+                       error('unknown result %s found in results parameter', string(results_split(i)));
                    end
                 end
                 results_str = results;
@@ -851,7 +851,7 @@ classdef BoonNanoSDK < handle
                 for i = 1:length(resultsplit) 
                    isin = contains(resultsplit(i),valid);
                    if(~any(isin(:)) )
-                       error('unknown result %s found in results parameter', resultsplit(i));
+                       error('unknown result %s found in results parameter', string(resultsplit(i)));
                    end
                 end
                 results_str = results;
