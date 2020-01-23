@@ -30,7 +30,7 @@ end
 
 
 
-%% Load Image And Display
+%% Load Image And Scale
 
 im_raw = imread('TestImage.bmp');
 
@@ -43,6 +43,7 @@ end
 
 %downsample (for faster processing)
 im_small = imresize(im_gray, 0.25);
+
 
 
 %% Create Histograms From Image

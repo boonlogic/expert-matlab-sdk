@@ -1,6 +1,4 @@
-% Copyright 2020, Boon Logic Inc.
-
-classdef MatrixProvider < matlab.net.http.io.ContentProvider & matlab.mixin.Copyable
+%
 % MatrixProvider ContentProvider that sends matrices to Rest API
 %
 %   This ContentProvider is a convenient way to send a matrix to a server.
@@ -11,27 +9,34 @@ classdef MatrixProvider < matlab.net.http.io.ContentProvider & matlab.mixin.Copy
 %      req = RequestMessage(PUT,[],provider);
 %      resp = req.send(url);
 %
+%   MatrixProvider methods:
+%     MatrixProvider - Constructor
 %
 %   MatrixProvider properties:
-%     data_matrix  - matrix of data to send to nano
-%     data_type    - Nano data type 'uint16', 'int16', or 'float32'
+%     num_elements  - Number of elements in data matrix
+%     element_count - Current index for sending data
+%     data_set      - Flattened data array
+%     byte_width    - Number of bytes per element of data_set
 %
-%   MatrixProvider methods:
-%     MatrixProvider - constructor
+%   Copyright 2020, Boon Logic Inc.
+%
 
+classdef MatrixProvider < matlab.net.http.io.ContentProvider & matlab.mixin.Copyable
     properties (Access=private)
-        NumElements double
-        ElementCount double
-        DataSet
-        ByteWidth double
+        num_elements double
+        element_count double
+        data_set
+        byte_width double
     end
     
     methods
         function obj = MatrixProvider(data_matrix, data_type)
         % MatrixProvider MatrixProvider constructor
-        %  PROVIDERS = MatrixProvider(data_matrix,data_type) constructs a MatrixProvider
+        %
+        %  PROVIDER = MatrixProvider(data_matrix,data_type) constructs a MatrixProvider
         %    which sends one (2D) matrix to the server. Used by
         %    BoonNanoSDK. Data is provided as raw bytes to the server
+        %
         % Args:
         %   data_matrix (matrix): Data matrix to send to server
         %   data_type (char): Nano data type 'uint16', 'int16', or 'float32'
@@ -46,62 +51,62 @@ classdef MatrixProvider < matlab.net.http.io.ContentProvider & matlab.mixin.Copy
                 error('data_type must be char');
             end
             
-            % Determine bytewidth, cast data, and reshape to 1D array
-            obj.ByteWidth = 0;
-            obj.DataSet = [];
+            % Determine byte_width, cast data, and reshape to 1D array
+            obj.byte_width = 0;
+            obj.data_set = [];
             if strcmp(data_type, 'uint8')
-                obj.ByteWidth = 1; %if data was already byte converted
-                obj.DataSet = reshape(uint8(data_matrix).',1,[]);
+                obj.byte_width = 1; %if data was already byte converted
+                obj.data_set = reshape(uint8(data_matrix).',1,[]);
             elseif strcmp(data_type, 'uint16')
-                obj.ByteWidth = 2; 
-                obj.DataSet = reshape(uint16(data_matrix).',1,[]);
+                obj.byte_width = 2; 
+                obj.data_set = reshape(uint16(data_matrix).',1,[]);
             elseif strcmp(data_type, 'int16')
-                obj.ByteWidth = 2; 
-                obj.DataSet = reshape(int16(data_matrix).',1,[]);
+                obj.byte_width = 2; 
+                obj.data_set = reshape(int16(data_matrix).',1,[]);
             elseif strcmp(data_type, 'float32')
-                obj.ByteWidth = 4; 
-                obj.DataSet = reshape(single(data_matrix).',1,[]);
+                obj.byte_width = 4; 
+                obj.data_set = reshape(single(data_matrix).',1,[]);
             end
             
-            if obj.ByteWidth == 0
+            if obj.byte_width == 0
                 error('data_type is unrecognized by server');
             end
             
             % Count Variables
-            obj.NumElements = numel(obj.DataSet);
-            obj.ElementCount = 1;
+            obj.num_elements = numel(obj.data_set);
+            obj.element_count = 1;
             
         end
         
         function [data, stop] = getData(obj, length)
         % getData - return next buffer of data
         %   [DATA, STOP] = getData(PROVIDER, LENGTH, FIRST) is an overridden method of
-        %   ContentProvider that returns the next buffer of data from the dataset. It sets
+        %   ContentProvider that returns the next buffer of data from the data_set. It sets
         %   STOP to true if all bytes have been read.
         %   Data matrix is converted to raw bytes (little endian) before
         %   transmission.
         %
         % See also matlab.net.http.io.ContentProvider.getData
-            if obj.NumElements == 0
+            if obj.num_elements == 0
                 data = [];
                 stop = true;
                 return;
             end
             
             samplelength = 0;
-            if(obj.ElementCount < obj.NumElements)
-                samplelength = length/obj.ByteWidth; %eg 2 bytes == 1 uint16
-                samplelength = min([samplelength, obj.NumElements - obj.ElementCount + 1]);
+            if(obj.element_count < obj.num_elements)
+                samplelength = length/obj.byte_width; %eg 2 bytes == 1 uint16
+                samplelength = min([samplelength, obj.num_elements - obj.element_count + 1]);
             end
             
             data = [];
             if samplelength > 0
-                chunk = obj.DataSet(obj.ElementCount:(obj.ElementCount+samplelength-1));
+                chunk = obj.data_set(obj.element_count:(obj.element_count+samplelength-1));
                 data = typecast(chunk, 'uint8'); %get bytes
             end
-            obj.ElementCount = obj.ElementCount + samplelength;
+            obj.element_count = obj.element_count + samplelength;
             
-            if isempty(data) || obj.ElementCount >= obj.NumElements
+            if isempty(data) || obj.element_count >= obj.num_elements
                 % empty must mean done
                 stop = true;
             else
@@ -110,7 +115,7 @@ classdef MatrixProvider < matlab.net.http.io.ContentProvider & matlab.mixin.Copy
         end
         
         function delete(obj)
-            obj.ElementCount = 1;
+            obj.element_count = 1;
         end
         
     end
@@ -129,7 +134,7 @@ classdef MatrixProvider < matlab.net.http.io.ContentProvider & matlab.mixin.Copy
         % 
             
             obj.complete@matlab.net.http.io.ContentProvider();
-            if isempty(obj.DataSet)
+            if isempty(obj.data_set)
                 return
             end
             
@@ -202,10 +207,10 @@ classdef MatrixProvider < matlab.net.http.io.ContentProvider & matlab.mixin.Copy
         % 
         % See also matlab.net.http.io.ContentProvider.start
             obj.start@matlab.net.http.io.ContentProvider();
-            if isempty(obj.DataSet)
+            if isempty(obj.data_set)
                 return
             end
-            obj.ElementCount = 1; %reset count
+            obj.element_count = 1; %reset count
            
         end
         
@@ -220,7 +225,7 @@ classdef MatrixProvider < matlab.net.http.io.ContentProvider & matlab.mixin.Copy
             if force
                 length = 0;
             else
-                length = obj.NumElements*obj.ByteWidth;
+                length = obj.num_elements*obj.byte_width;
             end
             
         end

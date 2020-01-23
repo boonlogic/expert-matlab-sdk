@@ -9,8 +9,6 @@ if success
     fprintf('Boon Nano API Version: %s \n',version_response.api_version);
 end
 
-
-
 %% Create instance
 [success, instance_response] = bn.openNano('inst1');
 if ~success
@@ -112,6 +110,24 @@ else
     fprintf('Nano Run Failed \n');
 end
 
+
+%% Plot Clustering Results
+
+colorspec = ['b' 'm' 'c' 'r' 'g' 'y' 'k'];
+
+figure(1)
+clf
+for k = 1 : size(Dataset,1)
+  hold on
+  id = mod(run_response.ID(k)-1, length(colorspec)) + 1;
+  plot(Dataset(k,:), 'Color', colorspec(id),'LineWidth',2)
+end
+hold off
+grid
+xlabel('Feature')
+ylabel('Value')
+title('BoonNano Clustering Results')
+ 
 
 
 %% Retrieve Additional Results From Latest Run

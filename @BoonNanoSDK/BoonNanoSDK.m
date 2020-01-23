@@ -1,11 +1,50 @@
+% 
+% BoonNanoSDK: Handle class containing functions for interacting with the
+% BoonNano Rest API.
+%
+% This is the primary handle to manage a Nano Pod instance.
+% This SDK requires a valid license from Boon Logic Inc.
+% Contact Boon Logic Inc. to receive a license.
+%
+%
+%   BoonNanoSDK methods:
+%     BoonNanoSDK       - Constructor
+%     openNano          - Open Nano Pod API Instance 
+%     closeNano         - Destructor method - closes Nano Pod 
+%     nanoList          - Return list of active Nano Pod instances   
+%     saveNano          - Serialize the Nano Pod instance and save it to local file 
+%     restoreNano       - Restore a Nano Pod instance from local file 
+%     configureNano     - Configure the Nano Pod parameters 
+%     generateConfig    - Generate formatted struct containing configuration
+%     getConfig         - Get current Nano Pod configuration parameters 
+%     autotuneConfig	- Autotune the Nano Pod configuration parameters 
+%     loadData          - Send data to the Nano Pod for clustering
+%     runNano	        - Run the current Nano Pod instance with the loaded data 
+%     getNanoResults	- Get results from latest Nano run  
+%     getNanoStatus     - Results in relation to each cluster/overall stats
+%     getBufferStatus	- Results related to the bytes processed/in the buffer  
+%     getVersion        - Get the current Nano Pod version information  
+%
+%
+%
+%   BoonNanoSDK properties:
+%     license_id        - License id block from .BoonLogic file
+%     api_key           - API license key
+%     api_tenant        - API license tenant
+%     server            - Address of API server 
+%     url               - Full URL of API server 
+%     http              - WebOptions for interacting with server
+%     instance          - Active Instance ID
+%     instance_config   - Dictionary of open instances
+%
+%
+% Naming conventions: 
+%   under_score: variables, camelCase: functions, TitleCase: classes
+%
 % Copyright 2020, Boon Logic Inc.
+%
 
 classdef BoonNanoSDK < handle
-    % BoonNanoSDK: class containing functions for interacting with the
-    % BoonNano cloud api.
-    % This is the primary handle to manage a nano pod instance.
-    % Naming conventions: 
-    % under_score: variables, camelCase: functions, TitleCase: classes
     properties (SetAccess = private)
         license_id
         api_key
@@ -18,14 +57,18 @@ classdef BoonNanoSDK < handle
     end
     methods
         function obj = BoonNanoSDK(license_id, license_file, timeout)
-        % BoonNanoSDK(): Constructor Method For BoonNanoSDK
+        % BoonNanoSDK Constructor method for BoonNanoSDK class
+        %
         % Optional Args:
-        %   license_id (str): license id ('default')
-        %   license_file (str): path to the license file ('~/.BoonLogic')
+        %   license_id (char): license id ('default')
+        %   license_file (char): path to the license file 
+        %                       Unix Default: ~/.BoonLogic
+        %                       Windows Default: C:/Users/<user>/.BoonLogic 
         %   timeout (float): HTTP Request Timeout (120.0)
         %
         % Returns:
-        %   nano dictionary handle 
+        %   BoonNanoSDK (class): class handle 
+        %
         
             %version check
             verstr = version('-release');
@@ -38,7 +81,9 @@ classdef BoonNanoSDK < handle
             %authentication file
             default_license_file = '~/.BoonLogic';
             if ispc
-                default_license_file = 'C:/temp/.BoonLogic';
+                home_drive = getenv('HOMEDRIVE');
+                home_path = getenv('HOMEPATH');
+                default_license_file = [home_drive home_path '\.BoonLogic'];
             end
             
             %defaults
@@ -71,13 +116,13 @@ classdef BoonNanoSDK < handle
                 if( isfield(file_data, license_env) )
                     obj.license_id = license_env;
                 else
-                    error('BOON_LICENSE_ID value of %s not found in .BoonLogic file %s', license_env);
+                    error('BOON_LICENSE_ID value of %s not found in .BoonLogic file %s', license_env, license_file);
                 end
             else
                 if( isfield(file_data, license_id) )
                     obj.license_id = license_id;
                 else
-                    error('BOON_LICENSE_ID value of %s not found in .BoonLogic file %s', license_id);
+                    error('BOON_LICENSE_ID value of %s not found in .BoonLogic file %s', license_id, license_file);
                 end
             end
 
@@ -127,12 +172,15 @@ classdef BoonNanoSDK < handle
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         function [success, instance_response] = openNano(obj, instance_id)
-        % openNano:  Open Nano API Instance
+        % openNano  Open Nano Pod API Instance
+        %
         % Args:
         %   instance_id (char): instance identifier to assign to new pod instance
+        %
         % Returns:
         %   success status (bool): true if api call succesful
         %   instance_response (struct): server response if success=true
+        %
             
             success = false;
             instance_response = struct;
@@ -165,11 +213,13 @@ classdef BoonNanoSDK < handle
         end
         
         function success = closeNano(obj)
-        % closeNano Destructor Method.
-        % Args:
+        % closeNano Destructor method - closes Nano Pod.
+        %
+        % Args: (empty)
         %
         % Returns:
         %   success (bool): true if api call succesful
+        %
         
             success = false;
             if( isempty(obj.instance) )
@@ -198,12 +248,14 @@ classdef BoonNanoSDK < handle
         end
 
         function [success, list_response] = nanoList(obj)
-            % nanoList: Return list of active nano instances
-            % Args:
+            % nanoList Return list of active Nano Pod instances
+            %
+            % Args: (empty)
             %
             % Returns:
-            %   success (bool): true if api call succesful
+            %   success (bool): true if api call successful
             %   list_response (struct): List of active nanos
+            %
 
             % build command
             instance_cmd = [obj.url 'nanoInstances' '?api-tenant=' obj.api_tenant];
@@ -220,11 +272,15 @@ classdef BoonNanoSDK < handle
         end
         
         function [success] = saveNano(obj, filename)
-        % saveNano: Serialize the Nano pod and saves it as a tar file
+        % saveNano Serialize the Nano Pod instance and save it to local file
+        %
         % Args:
         %   filename (char): Full path to file for saving
+        %                       File must be of type .tar
+        %
         % Returns:
         %   success (bool): true if api call succesful
+        %
 
             success = false;
             if( isempty(obj.instance) )
@@ -258,11 +314,14 @@ classdef BoonNanoSDK < handle
         end
         
         function [success] = restoreNano(obj, filename)
-        % restoreNano: Restore a nano pod instance from local file
+        % restoreNano Restore a Nano Pod instance from local file
+        %
         % Args:
         %   filename (char): Full path to file for loading
+        %
         % Returns:
         %   success (bool): true if api call succesful
+        %
         
             success = false;
             if( isempty(obj.instance) )
@@ -306,12 +365,15 @@ classdef BoonNanoSDK < handle
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         function [success, config_response] = configureNano(obj, config)
-        % configureNano: Configure the Nano pod parameters
+        % configureNano Configure the Nano Pod parameters
+        %
         % Args:
-        %   config (struct): configuration returned from generateConfig()
+        %   config (struct): Configuration returned from generateConfig()
+        %
         % Returns:
-        %   success (bool)
+        %   success (bool): success = true if Nano if configured
         %   config_response (struct): will match config when success = true
+        %
         
             success = false;
             config_response = struct;
@@ -352,10 +414,12 @@ classdef BoonNanoSDK < handle
         end
         
         function [success, config] = generateConfig(obj, feature_count, numeric_format, percent_variation, accuracy, min, max, streaming_window, weight, labels)
-        % generateConfig: Configure the Nano pod parameters
+        % generateConfig Generate formatted struct containing configuration
+        %
         % Args:
         %   feature_count (int): number of features per sample
         %   numeric_format (char): 'uint16', 'int16', or 'float32'
+        %
         % Optional Args:
         %   percent_variation (float): Variation between clusters (0.05)
         %   accuracy (float): Intra cluster accuracy (0.99)
@@ -364,9 +428,11 @@ classdef BoonNanoSDK < handle
         %   streaming_window (int): sliding window for streaming data (1)
         %   weight (vector): relative weightings [1]
         %   labels (char): feature labels ('')
+        %
         % Returns:
-        %   success (bool)
-        %   config (struct)
+        %   success (bool): success = true if all parameters are valid
+        %   config (struct): Populated configuration to send to server
+        %
             
             success = false;
             config = struct;
@@ -470,17 +536,20 @@ classdef BoonNanoSDK < handle
         end
         
         function [success, autotune_response] = autotuneConfig(obj, autotune_pv, autotune_range, by_feature, exclusions)
-        % autotuneConfig: Autotune the Nano pod configuration parameters
-        % Args:
+        % autotuneConfig Autotune the Nano Pod configuration parameters
+        %
+        % Args: (empty)
         %
         % Optional Args:
         %   autotune_pv (bool): Autotune percent variation (true)
         %   autotune_range (bool): Autotune min and max (true)
         %   by_feature (bool): Autotune each feature seperately (false)
-        %   exclusions (cell): Feature columns to ignore (empty)
+        %   exclusions (char): Feature columns to ignore (empty)
+        %
         % Returns:
         %   success (bool): true if api call succesful
         %   autotune_response (struct): The autotuned configuration
+        %
 
             success = false;
             autotune_response = struct;
@@ -488,7 +557,6 @@ classdef BoonNanoSDK < handle
             %check for active instance
             if( isempty(obj.instance) )
                 error('No Active Instances To Autotune. Call openNano() first.');
-                return;
             end
             
             %Parse Args
@@ -534,12 +602,14 @@ classdef BoonNanoSDK < handle
         end
         
         function [success, config_response] = getConfig(obj)
-        % getConfig: Get current Nano pod configuration parameters
-        % Args:
+        % getConfig Get current Nano Pod configuration parameters
+        %
+        % Args: (empty)
         % 
         % Returns:
         %   success (bool): true if api call succesful
         %   config_response (struct): Configuration struct from server
+        %
 
             success = false;
             config_response = struct;
@@ -566,14 +636,20 @@ classdef BoonNanoSDK < handle
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         function [success, load_response] = loadData(obj, data, append_data)
-        % loadData: Post the data to the server
+        % loadData Send data to the Nano Pod for clustering
+        %
         % Args:
-        %   data (matrix): Data to load #columns==config.feature_count
+        %   data (matrix): Data to load 
+        %                  Assumes row-major order
+        %                  # columns = config.feature_count
+        %
         % Optional Args:
-        %   append_data (bool): append this data to existing server data
+        %   append_data (bool): Append this data to existing server data
+        %
         % Returns:
-        %   success (bool): true if api call succesful
-        %   load_response (struct): response information if success = true
+        %   success (bool): true if api call successful
+        %   load_response (struct): Response information if success = true
+        %
 
             success = false;
             load_response = struct;
@@ -625,17 +701,21 @@ classdef BoonNanoSDK < handle
         end
         
         function [success, run_response] = runNano(obj, results)
-        % runNano: Run the current nano instance with the loaded data
+        % runNano Run the current Nano Pod instance with the loaded data
+        %
         % Args:
-        %   results (char): per pattern results
+        %   results (char): Comma seperated result identifiers
         %         ID = cluster ID
         %         SI = smoothed anomaly index
         %         RI = raw anomaly index
         %         FI = frequency index
         %         DI = distance index
+        %
         % Returns:
         %   success (bool)
-        %   run_response (struct): response from server if success=true
+        %   run_response (struct): Run response when success = true 
+        %                          Error message when success = false
+        %
         
             success = false;
             run_response = struct;
@@ -677,17 +757,21 @@ classdef BoonNanoSDK < handle
         end
         
         function [success, results_response] = getNanoResults(obj, results)
-        % getNanoResults: Get latest results from server
+        % getNanoResults Get results from latest Nano run
+        %
         % Args:
-        %   results (char): per pattern results
+        %   results (char): Comma seperated result identifiers
         %         ID = cluster ID
         %         SI = smoothed anomaly index
         %         RI = raw anomaly index
         %         FI = frequency index
         %         DI = distance index
+        %
         % Returns:
         %   success (bool):  true if successful 
-        %   results_response [struct]: results when success is true, error message when success = false
+        %   results_response [struct]: Results when success = true
+        %                               Error message when success = false
+        %
         
             success = false;
             results_response = struct;
@@ -730,9 +814,10 @@ classdef BoonNanoSDK < handle
         end
         
         function [success, status_response] = getNanoStatus(obj, results)
-        % getNanoStatus: Results in relation to each cluster/overall stats
+        % getNanoStatus Results in relation to each cluster/overall stats
+        %
         % Args:
-        %   results (char): per pattern results
+        %   results (char): Comma seperated result identifiers
         %     PCA = principal components (includes 0 cluster)
         %     clusterGrowth = indexes of each increase in cluster (includes 0 cluster)
         %     clusterSizes = number of patterns in each cluster (includes 0 cluster)
@@ -742,11 +827,14 @@ classdef BoonNanoSDK < handle
         %     patternMemory = base64 pattern memory (overall)
         %     totalInferences = total number of patterns clustered (overall)
         %     averageInferenceTime = time in milliseconds to cluster per
-        %         pattern (not available if uploading from serialized nano) (overall)
+        %         pattern (not available if uploading from serialized Nano) (overall)
         %     numClusters = total number of clusters (includes 0 cluster) (overall)
+        %
         % Returns:
         %   success (bool):  true if successful 
-        %   status_response [struct]: results when success is true, error message when success = false
+        %   status_response [struct]: Results when success = true 
+        %                               Error message when success = false
+        %
         
             if(nargin < 2)
                 results = 'All'; %default
@@ -794,10 +882,15 @@ classdef BoonNanoSDK < handle
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         function [success, version_response] = getVersion(obj)
-        % getVersion: Results related to the bytes processed/in the buffer
+        % getVersion Get the current Nano Pod version information
+        %
+        % Args: (empty)
+        %
         % Returns:
-        %    success (boolean): true if successful (version information was retrieved)
-        %    version_response (struct): results when success is true, error message when success = false
+        %    success (boolean): true if successful 
+        %    version_response (struct): Version information when success = true
+        %                               Error message when success = false
+        %
 
             % build command (minus the v3 portion)
             success = true;
@@ -814,10 +907,15 @@ classdef BoonNanoSDK < handle
         end
         
         function [success, status_response] = getBufferStatus(obj)
-        % getBufferStatus: Results related to the bytes processed/in the buffer
+        % getBufferStatus Results related to the bytes processed/in the buffer
+        %
+        % Args: (empty)
+        %
         % Returns:
         %    success (boolean): true if successful 
-        %    status_response (struct): results when success is true, error message when success = false
+        %    status_response (struct): Buffer size when success = true 
+        %                               Error message when success = false
+        %
 
             % build command
             success = true;
