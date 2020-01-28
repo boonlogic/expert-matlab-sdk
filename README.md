@@ -90,7 +90,7 @@ Running the **BoonNano_ExampleUsage.m** script should yield something like:
 
 ### Tutorials
 
-- __The General Pipeline__: [The General Pipeline](https://github.com/boonlogic/expert-matlab-sdk/Tutorials/Tutorial- The General Pipeline.md)
+- __The General Pipeline__: [The General Pipeline](https://github.com/boonlogic/expert-matlab-sdk/Tutorials/GeneralPipeline.md)
 
 
 ------------
