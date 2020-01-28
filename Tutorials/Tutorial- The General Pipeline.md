@@ -82,7 +82,7 @@ end
 ```matlab
 dataFile = 'Example_Data.csv'; % Insert your file here
 dataMat = csvread(dataFile);
-[success, load_response] = bn.loadData(Dataset);
+[success, load_response] = bn.loadData(dataMat);
 if success
     fprintf('Data Loaded \n');
 else
@@ -104,7 +104,7 @@ end
 #### Close NanoHanlde
 
 ```matlab
-success, response = nano.closeNano()
+[success, response] = nano.closeNano()
 if success
     fprintf('Nano Instance Closed. \n');
 else
