@@ -101,7 +101,7 @@ end
 
 
 %% Run Nano and compare results
-[success, run_response] = bn.runNano('ID'); 
+[success, run_response] = bn.runNano('ID');
 
 if(success)
     error_count=sum(run_response.ID~=ClusterID_GT);
@@ -127,7 +127,7 @@ grid
 xlabel('Feature')
 ylabel('Value')
 title('BoonNano Clustering Results')
- 
+
 
 
 %% Retrieve Additional Results From Latest Run
@@ -159,7 +159,7 @@ end
 %% Save the nano
 success = bn.saveNano('tester.tar');
 if ~success
-   fprintf('Failed to save nano \n'); 
+   fprintf('Failed to save nano \n');
 end
 
 
@@ -168,7 +168,7 @@ end
 %% Reload the nano and check config
 success = bn.restoreNano('tester.tar');
 if ~success
-   fprintf('Failed to restore nano \n'); 
+   fprintf('Failed to restore nano \n');
 else
     [~, newconfig] = bn.getConfig();
 end
@@ -176,6 +176,4 @@ end
 
 
 %% close and delete this instance
-success = bn.closeNano();
-
-
+[success, ~] = bn.closeNano();

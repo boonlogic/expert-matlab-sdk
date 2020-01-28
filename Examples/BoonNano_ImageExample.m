@@ -111,7 +111,7 @@ end
 
 
 %% Run Nano and compare results
-[success, run_response] = bn.runNano('ID,RI'); 
+[success, run_response] = bn.runNano('ID,RI');
 
 if(success)
     ai = mean(run_response.RI);
@@ -151,6 +151,4 @@ title('Raw Image')
 
 
 %% close and delete this instance
-success = bn.closeNano();
-
-
+[success, ~] = bn.closeNano();

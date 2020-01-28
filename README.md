@@ -46,30 +46,34 @@ The .BoonLogic file will be consulted by the BoonNano Matlab SDK to successfully
 
 The following Matlab script provides a basic proof-of-connectivity:
 
-**Examples/BoonNano_ExampleUsage.m**
+**Examples/connect-example.m**
 
 ```matlab
-% Create Nano Instance
-bn = BoonNanoSDK('default');
+% create new nano handle
+nano = BoonNanoSDK('default');
 
-%% Open/Attached to Nano Instane
-[success, instance_response] = bn.openNano('inst1');
+% open/attach to nano
+[success, response] = nano.openNano('my-instance');
 if success
 	fprintf('Created New Instance! \n');
 else
     fprintf('Failed To Create New Instance \n');
 end
 
-%Fetch the version information for this nano instance
-[success, version_response] = bn.getVersion();
+% fetch the version information for this nano instance
+[success, response] = nano.getVersion();
 if success
-    fprintf('Boon Nano API Version: %s \n',version_response.api_version);
+    fprintf('Boon Nano API Version: %s \n', response.api_version);
+else
+    fprintf('getVersion() Failed \n');
 end
 
-%% Close/detatch this instance
-success = bn.closeNano();
+% close/detach the nano instance
+[success, reponse] = nano.closeNano();
 if success
-	fprintf('Deleted Nano Instance"
+    fprintf('Closed Instance... \n');
+else
+    fprintf('closeNano() Failed \n');
 end
 
 ```
@@ -79,5 +83,20 @@ Running the **BoonNano_ExampleUsage.m** script should yield something like:
 ```sh
     Created New Instance!
     Boon Nano API Version: expert/v3
-    Deleted Nano Instance
+    Closed Instance...
 ```
+
+------------
+
+### Tutorials
+
+- __The General Pipeline__: [The General Pipeline](https://github.com/boonlogic/expert-matlab-sdk/Tutorials/Tutorial- The General Pipeline.md)
+
+
+------------
+
+### Example Scripts
+
+- __Example Clustering__: [BoonNano_ExampleUsage.m](https://github.com/boonlogic/expert-matlab-sdk/Examples/BoonNano_ExampleUsage.m)
+-  __Image Analysis__: [BoonNano_ImageExample.m](https://github.com/boonlogic/expert-matlab-sdk/Examples/BoonNano_ImageExample.m)
+-  __Connection Test__: [connect-example.m](https://github.com/boonlogic/expert-matlab-sdk/Examples/connect-example.m)
