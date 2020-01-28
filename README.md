@@ -55,7 +55,7 @@ nano = BoonNanoSDK('default');
 % open/attach to nano
 [success, response] = nano.openNano('my-instance');
 if success
-	fprintf('Created New Instance! \n');
+    fprintf('Created New Instance! \n');
 else
     fprintf('Failed To Create New Instance \n');
 end
