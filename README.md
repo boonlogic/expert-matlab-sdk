@@ -46,7 +46,7 @@ The .BoonLogic file will be consulted by the BoonNano Matlab SDK to successfully
 
 The following Matlab script provides a basic proof-of-connectivity:
 
-**Examples/connect-example.m**
+**Examples/connect_example.m**
 
 ```matlab
 % create new nano handle
@@ -99,4 +99,4 @@ Running the **BoonNano_ExampleUsage.m** script should yield something like:
 
 - __Example Clustering__: [BoonNano_ExampleUsage.m](https://github.com/boonlogic/expert-matlab-sdk/Examples/BoonNano_ExampleUsage.m)
 -  __Image Analysis__: [BoonNano_ImageExample.m](https://github.com/boonlogic/expert-matlab-sdk/Examples/BoonNano_ImageExample.m)
--  __Connection Test__: [connect-example.m](https://github.com/boonlogic/expert-matlab-sdk/Examples/connect-example.m)
+-  __Connection Test__: [connect_example.m](https://github.com/boonlogic/expert-matlab-sdk/Examples/connect_example.m)

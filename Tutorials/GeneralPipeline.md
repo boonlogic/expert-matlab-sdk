@@ -116,7 +116,7 @@ end
 
 The following Matlab script provides a basic proof-of-connectivity:
 
-**Examples/connect-example.m**
+**Examples/connect_example.m**
 
 ```matlab
 % create new nano handle
@@ -148,7 +148,7 @@ end
 
 ```
 
-Running the connect-example.m script should yield something like:
+Running the connect_example.m script should yield something like:
 
 ```sh
 	Created New Instance!
