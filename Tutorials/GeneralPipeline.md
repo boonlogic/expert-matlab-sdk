@@ -6,7 +6,7 @@
 
 - Download the expert-matlab-sdk repository to your computer
 
-- Add the @BoonNanoSDK and @MatrixProvider folders to your Matlab path
+- Add the expert-matlab-sdk folder to your Matlab path
 
 - **NOTE:** Requires Matlab version 2018a or newer
 
