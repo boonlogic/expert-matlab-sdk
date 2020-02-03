@@ -5,7 +5,8 @@ This Matlab class allows easy access to the functions provided in the BoonLogic 
 **NOTE:** In order to use this package, it is necessary to acquire a BoonNano license from Boon Logic, Inc.  A startup email will be sent providing the details for using this package.
 
 - __Website__: [https://boonlogic.com](https://github.com/boonlogic/expert-matlab-sdk)
-- __Documentation__: [https://github.com/boonlogic/expert-matlab-sdk](https://github.com/boonlogic/expert-matlab-sdk)
+- __Documentation__: [https://github.com/boonlogic/expert-matlab-sdk/Documentation/BoonNanoSDK.html](./Documentation/BoonNanoSDK.html)
+- __Interactive Documentation__: ```doc BoonNanoSDk``` in Matlab Command Window
 
 
 ------------
@@ -90,13 +91,13 @@ Running the **BoonNano_ExampleUsage.m** script should yield something like:
 
 ### Tutorials
 
-- __The General Pipeline__: [The General Pipeline](https://github.com/boonlogic/expert-matlab-sdk/Tutorials/GeneralPipeline.md)
+- __The General Pipeline__: [The General Pipeline](./Tutorials/GeneralPipeline.md)
 
 
 ------------
 
 ### Example Scripts
 
-- __Example Clustering__: [BoonNano_ExampleUsage.m](https://github.com/boonlogic/expert-matlab-sdk/Examples/BoonNano_ExampleUsage.m)
--  __Image Analysis__: [BoonNano_ImageExample.m](https://github.com/boonlogic/expert-matlab-sdk/Examples/BoonNano_ImageExample.m)
--  __Connection Test__: [connect_example.m](https://github.com/boonlogic/expert-matlab-sdk/Examples/connect_example.m)
+- __Example Clustering__: [BoonNano_ExampleUsage.m](./Examples/BoonNano_ExampleUsage.m)
+-  __Image Analysis__: [BoonNano_ImageExample.m](./Examples/BoonNano_ImageExample.m)
+-  __Connection Test__: [connect_example.m](./Examples/connect_example.m)

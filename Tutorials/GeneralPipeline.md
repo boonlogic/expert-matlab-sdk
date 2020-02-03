@@ -156,4 +156,4 @@ Running the connect_example.m script should yield something like:
 	Closed Instance...
 ```
 
-[Return to documentation homepage](../README.md)
+[Return to homepage](../README.md)
