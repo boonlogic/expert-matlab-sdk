@@ -5,7 +5,7 @@ This Matlab class allows easy access to the functions provided in the BoonLogic 
 **NOTE:** In order to use this package, it is necessary to acquire a BoonNano license from Boon Logic, Inc.  A startup email will be sent providing the details for using this package.
 
 - __Website__: [https://boonlogic.com](https://github.com/boonlogic/expert-matlab-sdk)
-- __Documentation__: [https://github.com/boonlogic/expert-matlab-sdk/Documentation/BoonNanoSDK.html](./Documentation/BoonNanoSDK.html)
+- __Documentation__: [https://github.com/boonlogic/expert-matlab-sdk/Documentation/BoonNanoSDK.html](./Documentation/BoonNanoSDK.md)
 - __Interactive Documentation__: ```doc BoonNanoSDk``` in Matlab Command Window
 
 
