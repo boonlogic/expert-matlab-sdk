@@ -62,12 +62,16 @@ x_lims = 1:stride:(image_x_dim-neighborhood_buffer);
 y_regions = length(y_lims);
 x_regions = length(x_lims);
 
+%histogram limits
+step = 255.0/(num_bins);
+edges = uint8( 0:step:255 );
+
 Dataset = zeros(y_regions*x_regions, num_bins);
 idx = 1;
 for yy = y_lims
     for xx = x_lims
         roi = im_small(yy:yy+neighborhood_buffer, xx:xx+neighborhood_buffer, :);
-        [counts,~] = imhist(roi,num_bins);
+        [counts,~] = histcounts(roi,edges);
         Dataset(idx,:) = counts.';
         idx = idx + 1;
     end
@@ -96,7 +100,7 @@ else
 end
 
 
-%% Load data to cloud with histogram command
+%% Load data to cloud 
 
 [success, load_response] = bn.loadData(Dataset);
 
