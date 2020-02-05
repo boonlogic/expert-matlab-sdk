@@ -176,4 +176,4 @@ end
 
 
 %% close and delete this instance
-[success, ~] = bn.closeNano();
+[success, rrr] = bn.closeNano();
