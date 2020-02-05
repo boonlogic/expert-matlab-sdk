@@ -116,13 +116,13 @@ classdef BoonNanoSDK < handle
                 if( isfield(file_data, license_env) )
                     obj.license_id = license_env;
                 else
-                    error('BOON_LICENSE_ID value of %s not found in .BoonLogic file %s', license_env, license_file);
+                    error('MATLAB:arg:missingValue','BOON_LICENSE_ID value of %s not found in .BoonLogic file %s', license_env, license_file);
                 end
             else
                 if( isfield(file_data, license_id) )
                     obj.license_id = license_id;
                 else
-                    error('BOON_LICENSE_ID value of %s not found in .BoonLogic file %s', license_id, license_file);
+                    error('MATLAB:arg:missingValue','BOON_LICENSE_ID value of %s not found in .BoonLogic file %s', license_id, license_file);
                 end
             end
 
@@ -133,7 +133,7 @@ classdef BoonNanoSDK < handle
             obj.api_key = getenv('BOON_API_KEY');
             if(isempty(obj.api_key))
                 if(~isfield(license_block, 'api_key') )
-                    error('api-key is missing from configuration, set via BOON_API_KEY or in .BoonLogic file');
+                    error('MATLAB:arg:missingValue','api-key is missing from configuration, set via BOON_API_KEY or in .BoonLogic file');
                 end
                 obj.api_key = license_block.api_key;
             end
@@ -142,7 +142,7 @@ classdef BoonNanoSDK < handle
             obj.server = getenv('BOON_SERVER');
             if(isempty(obj.server))
                 if(~isfield(license_block, 'server') )
-                    error('server is missing from configuration, set via BOON_SERVER or in .BoonLogic file');
+                    error('MATLAB:arg:missingValue','server is missing from configuration, set via BOON_SERVER or in .BoonLogic file');
                 end
                 obj.server = license_block.server;
             end
@@ -151,7 +151,7 @@ classdef BoonNanoSDK < handle
             obj.api_tenant = getenv('BOON_TENANT');
             if(isempty(obj.api_tenant))
                 if(~isfield(license_block, 'api_tenant') )
-                    error('api-tenant is missing from configuration, set via BOON_TENANT or in .BoonLogic file');
+                    error('MATLAB:arg:missingValue','api-tenant is missing from configuration, set via BOON_TENANT or in .BoonLogic file');
                 end
                 obj.api_tenant = license_block.api_tenant;
             end
@@ -187,7 +187,7 @@ classdef BoonNanoSDK < handle
 
             % check types
             if ~ischar(instance_id)
-                error('instance_id must be a char');
+                error('MATLAB:arg:invalidType','instance_id must be a char');
             end
 
             %build command
@@ -212,7 +212,7 @@ classdef BoonNanoSDK < handle
             return
         end
 
-        function [success, close_response] = closeNano(obj)
+        function [success, close_response] = closeNano(obj, instance_id)
         % closeNano Destructor method - closes Nano Pod.
         %
         % Args: (empty)
@@ -223,12 +223,23 @@ classdef BoonNanoSDK < handle
         %
 
             success = false;
-            if( isempty(obj.instance) )
-                error('No Active Instances To Close. Call openNano() first.');
+
+            if(nargin < 2)
+                if( isempty(obj.instance) )
+                    error('MATLAB:class:invalidUsage','No Active Instances To Close. Call openNano() first.');
+                else
+                    instance_name = obj.instance;
+                end
+            else
+                if isempty(instance_id) || ~ischar(instance_id)
+                    error('MATLAB:arg:invalidType','instance_id must not be a non-empty char.');
+                else
+                    instance_name = instance_id;
+                end
             end
 
             %command
-            close_cmd = [obj.url 'nanoInstance/' obj.instance '?api-tenant=' obj.api_tenant];
+            close_cmd = [obj.url 'nanoInstance/' instance_name '?api-tenant=' obj.api_tenant];
             options = obj.http; %default options
             options.RequestMethod = 'delete';
             options.ContentType = 'auto';
@@ -240,10 +251,13 @@ classdef BoonNanoSDK < handle
                 return
             end
 
-            if isfield(obj.instance_config,obj.instance)
-                obj.instance_config = rmfield(obj.instance_config,obj.instance);
+            if isfield(obj.instance_config,instance_name)
+                obj.instance_config = rmfield(obj.instance_config,instance_name);
             end
-            obj.instance = '';
+            
+            if ~isempty(obj.instance) && strcmp(obj.instance, instance_name)
+                obj.instance = '';
+            end
             success = true;
             return
         end
@@ -285,12 +299,12 @@ classdef BoonNanoSDK < handle
 
             success = false;
             if( isempty(obj.instance) )
-                error('No Active Instances To Save. Call openNano() first.');
+                error('MATLAB:class:invalidUsage','No Active Instances To Save. Call openNano() first.');
             end
 
             %check filetype
             if( ~contains(filename, '.tar'))
-                error('Dataset Must Be In .tar Format');
+                error('MATLAB:arg:invalidType','Dataset Must Be In .tar Format');
             end
 
             % build command
@@ -305,7 +319,7 @@ classdef BoonNanoSDK < handle
             % at this point, the call succeeded so save to a tar file
             fileID = fopen(filename,'w');
             if(fileID < 0)
-               error('Unable to open file %s for writing',filename);
+               error('MATLAB:filewrite:cannotOpenFile','Unable to open file %s for writing',filename);
             end
             fwrite(fileID,snapshot_response);
             fclose(fileID);
@@ -326,12 +340,12 @@ classdef BoonNanoSDK < handle
 
             success = false;
             if( isempty(obj.instance) )
-                error('No Active Instances To Restore. Call openNano() first.');
+                error('MATLAB:class:invalidUsage','No Active Instances To Restore. Call openNano() first.');
             end
 
             %check filetype
             if( ~contains(filename, '.tar'))
-                error('Dataset Must Be In .tar Format');
+                error('MATLAB:arg:invalidType','Dataset Must Be In .tar Format');
             end
 
             % build command
@@ -379,12 +393,13 @@ classdef BoonNanoSDK < handle
             success = false;
             config_response = struct;
             if( isempty(obj.instance) )
-                error('No Active Instances To Configure. Call openNano() first.');
+                error('MATLAB:class:invalidUsage','No Active Instances To Configure. Call openNano() first.');
             end
 
-            if (nargin < 2 || isempty(config))
-              error('Must pass valid config, call generateConfig() first');
+            if (nargin < 2 || isempty(config) || ~isfield(config,'accuracy') || ~isfield(config,'percentVariation') || ~isfield(config,'features') || ~isfield(config,'numericFormat'))
+              error('MATLAB:arg:invalidType','Must pass valid config as arg, call generateConfig() first');
             end
+           
 
             % build command
             config_cmd = [obj.url 'clusterConfig/' obj.instance '?api-tenant=' obj.api_tenant];
@@ -440,7 +455,7 @@ classdef BoonNanoSDK < handle
 
             %args
             if(nargin < 3)
-                error('Must specify feature_count and numeric_format');
+                error('MATLAB:arg:invalidType','Must specify feature_count and numeric_format');
             end
             if(nargin < 4)
                 percent_variation = 0.05;
@@ -484,18 +499,18 @@ classdef BoonNanoSDK < handle
             %check for valid numeric format
             cmp = strcmp(numeric_format,{'float32', 'int16', 'uint16'});
             if ~any(cmp(:))
-            	error('numeric_format must be float32, int16, or uint16');
+            	error('MATLAB:arg:invalidType','numeric_format must be float32, int16, or uint16');
             end
 
             %check dimensions of args
             if(length(max) ~= 1 && length(max) ~= feature_count)
-                error('length(max) must match feature_count');
+                error('MATLAB:arg:invalidType','length(max) must match feature_count');
             end
             if(length(min) ~= 1 && length(min) ~= feature_count)
-                error('length(min) must match feature_count');
+                error('MATLAB:arg:invalidType','length(min) must match feature_count');
             end
             if(length(weight) ~= 1 && length(weight) ~= feature_count)
-                error('length(weight) must match feature_count');
+                error('MATLAB:arg:invalidType','length(weight) must match feature_count');
             end
 
             %initialize configuration structure
@@ -557,7 +572,7 @@ classdef BoonNanoSDK < handle
 
             %check for active instance
             if( isempty(obj.instance) )
-                error('No Active Instances To Autotune. Call openNano() first.');
+                error('MATLAB:class:invalidUsage','No Active Instances To Autotune. Call openNano() first.');
             end
 
             %Parse Args
@@ -615,7 +630,7 @@ classdef BoonNanoSDK < handle
             success = false;
             config_response = struct;
             if( isempty(obj.instance) )
-                error('No Active Instances. Call openNano() first.');
+                error('MATLAB:class:invalidUsage','No Active Instances. Call openNano() first.');
             end
 
             % build command
@@ -656,8 +671,8 @@ classdef BoonNanoSDK < handle
             load_response = struct;
 
             % Optional arguments
-            if(nargin<2 || isempty(data))
-                error('Must pass data matrix as argument');
+            if(nargin<2 || isempty(data) || ~isnumeric(data))
+                error('MATLAB:arg:invalidType','Must pass data matrix as argument');
             end
             if(nargin<3)
                 append_data=false;
@@ -665,10 +680,10 @@ classdef BoonNanoSDK < handle
 
             %check for instances
             if( isempty(obj.instance) )
-                error('No Active Instances. Call openNano() first.');
+                error('MATLAB:class:invalidUsage','No Active Instances. Call openNano() first.');
             end
             if ~isfield(obj.instance_config, obj.instance)
-                error('Active Instance %s Is Not Configured. Call configNano() first.', obj.instance);
+                error('MATLAB:class:invalidUsage','Active Instance %s Is Not Configured. Call configNano() first.', obj.instance);
             end
 
             %instance configurations
@@ -722,14 +737,15 @@ classdef BoonNanoSDK < handle
             run_response = struct;
             if strcmp(results, 'All')
                 results_str = 'ID,SI,RI,FI,DI';
+            elseif(isempty(results))
+                results_str = results;
             else
                 results_split = split(results,',');
                 valid = {'ID','SI','RI','FI','DI'};
                 for i = 1:length(results_split)
                    isin = contains(results_split(i),valid);
                    if(~any(isin(:)) )
-                       success = false;
-                       error('unknown result %s found in results parameter', string(results_split(i)));
+                       error('MATLAB:arg:invalidType','unknown result %s found in results parameter', string(results_split(i)));
                    end
                 end
                 results_str = results;
@@ -737,7 +753,7 @@ classdef BoonNanoSDK < handle
 
             %check for instances
             if( isempty(obj.instance) )
-                error('No Active Instances. Call openNano() first.');
+                error('MATLAB:class:invalidUsage','No Active Instances. Call openNano() first.');
             end
 
             %Command
@@ -782,14 +798,15 @@ classdef BoonNanoSDK < handle
 
             if strcmp(results, 'All')
                 results_str = 'ID,SI,RI,FI,DI';
+            elseif(isempty(results))
+                error('MATLAB:arg:invalidType','results string must contain atleast one valid identifier');
             else
                 results_split = split(results,',');
                 valid = {'ID','SI','RI','FI','DI'};
                 for i = 1:length(results_split)
                    isin = contains(results_split(i),valid);
                    if(~any(isin(:)) )
-                       success = false;
-                       error('unknown result %s found in results parameter', string(results_split(i)));
+                       error('MATLAB:arg:invalidType','unknown result %s found in results parameter', string(results_split(i)));
                    end
                 end
                 results_str = results;
@@ -797,7 +814,7 @@ classdef BoonNanoSDK < handle
 
             %check for instances
             if( isempty(obj.instance) )
-                error('No Active Instances. Call openNano() first.');
+                error('MATLAB:class:invalidUsage','No Active Instances. Call openNano() first.');
             end
 
             %Command
@@ -846,13 +863,15 @@ classdef BoonNanoSDK < handle
             status_response = struct;
             if strcmp(results, 'All')
                 results_str = 'PCA,clusterGrowth,clusterSizes,anomalyIndexes,frequencyIndexes,distanceIndexes,totalInferences,numClusters';
+            elseif(isempty(results))
+                error('MATLAB:arg:invalidType','results string must contain atleast one valid identifier');
             else
                 resultsplit = split(results,',');
                 valid = {'PCA','clusterGrowth','clusterSizes','anomalyIndexes','frequencyIndexes','distanceIndexes','totalInferences','numClusters','averageInferenceTime'};
                 for i = 1:length(resultsplit)
                    isin = contains(resultsplit(i),valid);
                    if(~any(isin(:)) )
-                       error('unknown result %s found in results parameter', string(resultsplit(i)));
+                       error('MATLAB:arg:invalidType','unknown result %s found in results parameter', string(resultsplit(i)));
                    end
                 end
                 results_str = results;
@@ -860,7 +879,7 @@ classdef BoonNanoSDK < handle
 
             %check for instances
             if( isempty(obj.instance) )
-                error('No Active Instances. Call openNano() first.');
+                error('MATLAB:class:invalidUsage','No Active Instances. Call openNano() first.');
             end
 
             %Command
