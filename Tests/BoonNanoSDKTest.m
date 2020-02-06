@@ -315,7 +315,7 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             setenv('BOON_API_KEY','');
             
             %Specify non-existent license_file
-            testCase.verifyThat(@() BoonNanoSDK('default'), Throws('MATLAB:arg:missingValue'))
+            testCase.verifyThat(@() BoonNanoSDK('default','BOONLICENSE'), Throws('MATLAB:arg:missingValue'))
             
             %revert
             setenv('BOON_API_KEY',api_key);
