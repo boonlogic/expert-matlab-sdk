@@ -310,8 +310,15 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             %Test class constructor with invalid args
             import matlab.unittest.constraints.Throws
             
+            %remove key var
+            api_key = getenv('BOON_API_KEY');
+            setenv('BOON_API_KEY','');
+            
             %Specify non-existent license_file
-            testCase.verifyThat(@() BoonNanoSDK('default', 'BOONLICENSE'), Throws('MATLAB:fileread:cannotOpenFile'))
+            testCase.verifyThat(@() BoonNanoSDK('default'), Throws('MATLAB:arg:missingValue'))
+            
+            %revert
+            setenv('BOON_API_KEY',api_key);
         end
         function testOpenNanoError1(testCase)
             %Test openNano() method with invalid args

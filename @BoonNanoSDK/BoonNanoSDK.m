@@ -105,29 +105,33 @@ classdef BoonNanoSDK < handle
             if(nargin < 1)
                 license_id = 'default';
             end
+            
+            license_block = struct;
+            
+            if ( exist(license_file, 'file') == 2 )
+                % Load license file
+                json_file = fileread(license_file);
+                file_data = jsondecode(json_file); % returns struct
 
-            % Load license file
-            json_file = fileread(license_file);
-            file_data = jsondecode(json_file); % returns struct
+                % load the license block, environment gets precedence
+                license_env = getenv('BOON_LICENSE_ID');
+                if(~isempty(license_env))
+                    if( isfield(file_data, license_env) )
+                        obj.license_id = license_env;
+                    else
+                        error('MATLAB:arg:missingValue','BOON_LICENSE_ID value of %s not found in .BoonLogic file %s', license_env, license_file);
+                    end
+                else
+                    if( isfield(file_data, license_id) )
+                        obj.license_id = license_id;
+                    else
+                        error('MATLAB:arg:missingValue','BOON_LICENSE_ID value of %s not found in .BoonLogic file %s', license_id, license_file);
+                    end
+                end
 
-            % load the license block, environment gets precedence
-            license_env = getenv('BOON_LICENSE_ID');
-            if(~isempty(license_env))
-                if( isfield(file_data, license_env) )
-                    obj.license_id = license_env;
-                else
-                    error('MATLAB:arg:missingValue','BOON_LICENSE_ID value of %s not found in .BoonLogic file %s', license_env, license_file);
-                end
-            else
-                if( isfield(file_data, license_id) )
-                    obj.license_id = license_id;
-                else
-                    error('MATLAB:arg:missingValue','BOON_LICENSE_ID value of %s not found in .BoonLogic file %s', license_id, license_file);
-                end
+                %Extract json data for this license ID
+                license_block = getfield(file_data, obj.license_id);
             end
-
-            %Extract json data for this license ID
-            license_block = getfield(file_data, obj.license_id);
 
             %look for api_key
             obj.api_key = getenv('BOON_API_KEY');
@@ -156,6 +160,7 @@ classdef BoonNanoSDK < handle
                 obj.api_tenant = license_block.api_tenant;
             end
 
+            
             obj.url = [obj.server '/expert/v3/'];
             if ( ~contains(obj.server, 'http') )
                 obj.url = ['http://' obj.url];
