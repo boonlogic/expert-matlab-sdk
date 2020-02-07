@@ -687,17 +687,32 @@ classdef BoonNanoSDK < handle
             if( isempty(obj.instance) )
                 error('MATLAB:class:invalidUsage','No Active Instances. Call openNano() first.');
             end
-            if ~isfield(obj.instance_config, obj.instance)
-                error('MATLAB:class:invalidUsage','Active Instance %s Is Not Configured. Call configNano() first.', obj.instance);
-            end
+            
+            if isfield(obj.instance_config, obj.instance)
+                %instance configurations
+                inst_config = obj.instance_config.(obj.instance);
 
-            %instance configurations
-            inst_config = obj.instance_config.(obj.instance);
-
-            %check data dimensions
-            [nsamples, nfeatures] = size(data);
-            if(nfeatures ~= inst_config.feature_count)
-               warning('BoonNanoSDK is Row Major, Loading %d Samples, %d Features', nsamples, nfeatures);
+                %check data dimensions
+                [nsamples, nfeatures] = size(data);
+                if(nfeatures ~= inst_config.feature_count)
+                   warning('BoonNanoSDK is Row Major, Loading %d Samples, %d Features', nsamples, nfeatures);
+                end
+            
+                %set numeric format for upload
+                numeric_format = inst_config.numeric_format;
+            else
+                %infer feature count and type
+                [~, feature_count] = size(data);
+                data_format = class(data);
+                
+                %create temp configuration
+                [~, config] = obj.generateConfig(feature_count, data_format);
+                numeric_format = config.numericFormat;
+                
+                %flash warning
+                warning('Nano Pod is Not Configured. Inferring Feature Count = %d, Numeric Format = %s', feature_count, numeric_format);
+                [~, ~] = obj.configureNano(config);
+                
             end
 
             % build command
@@ -705,7 +720,7 @@ classdef BoonNanoSDK < handle
             load_cmd = [obj.url 'data/' obj.instance '?api-tenant=' obj.api_tenant '&fileType=raw' '&appendData=' tfs{append_data+1}];
 
             %format multi part message
-            mat_provider = MatrixProvider(data, inst_config.numeric_format);
+            mat_provider = MatrixProvider(data, numeric_format);
             multipart = matlab.net.http.io.MultipartFormProvider('data',mat_provider);
             header = matlab.net.http.HeaderField('x-token', obj.api_key,'Content-Type','multipart/form-data');
             req = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.POST,header,multipart);

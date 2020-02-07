@@ -433,18 +433,14 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             for ii = 1:length(response)
                 [~, ~] = bn.closeNano(response(ii).instanceID);
             end
-            
-            [~, ~] = bn.openNano('instanceLoad');
-            
+             
             %create data
             featurelength = 100;
             numSamples = 30;
             Dataset = randi([-100, 100],numSamples,featurelength);
             
-            %load dataset without an active configuration
+            %load dataset without an active nano
             testCase.verifyThat(@() bn.loadData(Dataset), Throws('MATLAB:class:invalidUsage'))
-
-            [~, ~] = bn.closeNano();
         end
         function testRunNanoError(testCase)
             %Test runNano() method with invalid procedure
