@@ -14,7 +14,7 @@
 
 Note: A license must be obtained from Boon Logic to use the BoonNano Matlab SDK
 
-The license should be saved in ~/.BoonLogic on unix machines or C:/Users/\<user\>/.BoonLogic on windows machines. This file will contain the following format:
+The license should be saved in ~/.BoonLogic.lic on unix machines or C:/Users/\<user\>/.BoonLogic.lic on windows machines. This file will contain the following format:
 
 ```json
 {
@@ -28,7 +28,7 @@ The license should be saved in ~/.BoonLogic on unix machines or C:/Users/\<user\
 
 The *API-KEY*, *WEB ADDRESS*, and *API-TENANT* will be unique to your obtained license.
 
-The .BoonLogic file will be consulted by the BoonNano Matlab SDK to successfully find and authenticate with your designated server.
+The .BoonLogic.lic file will be consulted by the BoonNano Matlab SDK to successfully find and authenticate with your designated server.
 
 
 
