@@ -28,7 +28,7 @@
 %
 %
 %   BoonNanoSDK properties:
-%     license_id        - License id block from .BoonLogic file
+%     license_id        - License id block from .BoonLogic.lic file
 %     api_key           - API license key
 %     api_tenant        - API license tenant
 %     server            - Address of API server
@@ -62,8 +62,9 @@ classdef BoonNanoSDK < handle
         % Optional Args:
         %   license_id (char): license id ('default')
         %   license_file (char): path to the license file
-        %                       Unix Default: ~/.BoonLogic
-        %                       Windows Default: C:/Users/<user>/.BoonLogic
+        %                       Unix Default: ~/.BoonLogic.lic
+        %                       Windows Default:
+        %                       C:/Users/<user>/.BoonLogic.lic
         %   timeout (float): HTTP Request Timeout (120.0)
         %
         % Returns:
@@ -79,11 +80,11 @@ classdef BoonNanoSDK < handle
             end
 
             %authentication file
-            default_license_file = '~/.BoonLogic';
+            default_license_file = '~/.BoonLogic.lic';
             if ispc
                 home_drive = getenv('HOMEDRIVE');
                 home_path = getenv('HOMEPATH');
-                default_license_file = [home_drive home_path '\.BoonLogic'];
+                default_license_file = [home_drive home_path '\.BoonLogic.lic'];
             end
 
             %defaults
@@ -119,13 +120,13 @@ classdef BoonNanoSDK < handle
                     if( isfield(file_data, license_env) )
                         obj.license_id = license_env;
                     else
-                        error('MATLAB:arg:missingValue','BOON_LICENSE_ID value of %s not found in .BoonLogic file %s', license_env, license_file);
+                        error('MATLAB:arg:missingValue','BOON_LICENSE_ID value of %s not found in .BoonLogic.lic file %s', license_env, license_file);
                     end
                 else
                     if( isfield(file_data, license_id) )
                         obj.license_id = license_id;
                     else
-                        error('MATLAB:arg:missingValue','BOON_LICENSE_ID value of %s not found in .BoonLogic file %s', license_id, license_file);
+                        error('MATLAB:arg:missingValue','BOON_LICENSE_ID value of %s not found in .BoonLogic.lic file %s', license_id, license_file);
                     end
                 end
 
@@ -137,7 +138,7 @@ classdef BoonNanoSDK < handle
             obj.api_key = getenv('BOON_API_KEY');
             if(isempty(obj.api_key))
                 if(~isfield(license_block, 'api_key') )
-                    error('MATLAB:arg:missingValue','api-key is missing from configuration, set via BOON_API_KEY or in .BoonLogic file');
+                    error('MATLAB:arg:missingValue','api-key is missing from configuration, set via BOON_API_KEY or in .BoonLogic.lic file');
                 end
                 obj.api_key = license_block.api_key;
             end
@@ -146,7 +147,7 @@ classdef BoonNanoSDK < handle
             obj.server = getenv('BOON_SERVER');
             if(isempty(obj.server))
                 if(~isfield(license_block, 'server') )
-                    error('MATLAB:arg:missingValue','server is missing from configuration, set via BOON_SERVER or in .BoonLogic file');
+                    error('MATLAB:arg:missingValue','server is missing from configuration, set via BOON_SERVER or in .BoonLogic.lic file');
                 end
                 obj.server = license_block.server;
             end
@@ -155,7 +156,7 @@ classdef BoonNanoSDK < handle
             obj.api_tenant = getenv('BOON_TENANT');
             if(isempty(obj.api_tenant))
                 if(~isfield(license_block, 'api_tenant') )
-                    error('MATLAB:arg:missingValue','api-tenant is missing from configuration, set via BOON_TENANT or in .BoonLogic file');
+                    error('MATLAB:arg:missingValue','api-tenant is missing from configuration, set via BOON_TENANT or in .BoonLogic.lic file');
                 end
                 obj.api_tenant = license_block.api_tenant;
             end
