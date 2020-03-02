@@ -107,6 +107,36 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             
             [~,~] = bn.closeNano();
         end
+        function testConfigureNanoWeights(testCase)
+            %Test configureNano() method with weights
+            import matlab.unittest.constraints.HasField
+          
+            bn = BoonNanoSDK('default');
+            instance_name = 'instance1';
+            [~, ~] = bn.openNano(instance_name);
+            
+            percentVariation = 0.05;
+            accuracy = 0.99;
+            numericFormat = 'uint16';
+            featureLength = 100;
+            weights = ones(1,featureLength);
+            weights(50) = 100;
+
+            [~, config] = bn.generateConfig(featureLength, numericFormat, percentVariation, accuracy, 0, 1000, 1, weights);
+            [success, response] = bn.configureNano(config);
+
+            testCase.verifyTrue(success);
+            testCase.verifyThat(response, HasField('percentVariation'));
+            testCase.verifyThat(response, HasField('accuracy'));
+            testCase.verifyThat(response, HasField('numericFormat'));
+            testCase.verifyThat(response, HasField('features'));
+            testCase.verifyEqual(response.percentVariation, percentVariation);
+            testCase.verifyEqual(response.accuracy, accuracy);
+            testCase.verifyEqual(response.numericFormat, numericFormat);
+            testCase.verifyEqual(response.features(50).weight, 100);
+            
+            [~,~] = bn.closeNano();
+        end
         function testloadData(testCase)
             %Test loadData() method
           
