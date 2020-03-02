@@ -537,9 +537,9 @@ classdef BoonNanoSDK < handle
                 end
                 % weights
                 if (length(weight) == 1)
-                    temp_feature.weight = weight;
+                    temp_feature.weight = uint16(weight);
                 else % the weight vals are given as a list
-                    temp_feature.weight = weight(x);
+                    temp_feature.weight = uint16(weight(x));
                 end
                 % labels
                 if (~isempty(labels) && ~isempty(labels(x)))
