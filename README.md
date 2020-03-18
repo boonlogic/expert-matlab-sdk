@@ -89,9 +89,8 @@ Running the **BoonNano_ExampleUsage.m** script should yield something like:
 ------------
 
 ### Tutorials
-
+- __Introduction To Clustering__: [Introduction To Clustering](https://github.com/boonlogic/expert-rest-api/blob/master/Guides/Intro_to_Clustering.md)
 - __The General Pipeline__: [The General Pipeline](./Tutorials/GeneralPipeline.md)
-
 
 ------------
 
