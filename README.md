@@ -5,7 +5,8 @@ This Matlab class allows easy access to the functions provided in the BoonLogic 
 **NOTE:** In order to use this package, it is necessary to acquire a BoonNano license from Boon Logic, Inc.  A startup email will be sent providing the details for using this package.
 
 - __Website__: [https://github.com/boonlogic/expert-matlab-sdk](https://github.com/boonlogic/expert-matlab-sdk)
-- __Documentation__: ```doc BoonNanoSDk``` in Matlab Command Window
+- __API Documentation__: [docs.boonlogic.com](http://docs.boonlogic.com/)
+- __Matlab Documentation__: ```doc BoonNanoSDk``` in Matlab Command Window
 
 
 ------------
@@ -23,7 +24,7 @@ This Matlab class allows easy access to the functions provided in the BoonLogic 
 
 Note: A license must be obtained from Boon Logic to use the BoonNano Matlab SDK
 
-The license should be saved in ~/.BoonLogic.license on unix machines or C:\Users\\<user\>\.BoonLogic.license on windows machines. This file will contain the following format:
+The license should be saved in ```~/.BoonLogic.license``` on unix machines or ```C:\Users\<user>\.BoonLogic.license``` on windows machines. This file will contain the following format:
 
 ```json
 {
@@ -78,7 +79,7 @@ end
 
 ```
 
-Running the **BoonNano_ExampleUsage.m** script should yield something like:
+Running the **BoonNano_ExampleUsage.m** script should yield the following output:
 
 ```sh
     Created New Instance!
@@ -89,7 +90,7 @@ Running the **BoonNano_ExampleUsage.m** script should yield something like:
 ------------
 
 ### Tutorials
-- __Introduction To Clustering__: [Introduction To Clustering](https://github.com/boonlogic/expert-rest-api/blob/master/Guides/Intro_to_Clustering.md)
+- __Introduction To Clustering__: [Introduction To Clustering](http://docs.boonlogic.com/docs/Intro_to_Clustering.html)
 - __The General Pipeline__: [The General Pipeline](./Tutorials/GeneralPipeline.md)
 
 ------------
@@ -98,4 +99,5 @@ Running the **BoonNano_ExampleUsage.m** script should yield something like:
 
 - __Example Clustering__: [BoonNano_ExampleUsage.m](./Examples/BoonNano_ExampleUsage.m)
 -  __Image Analysis__: [BoonNano_ImageExample.m](./Examples/BoonNano_ImageExample.m)
+- __Streaming Data__: [BoonNano_StreamingExample.m](./Examples/BoonNano_StreamingExample.m)
 -  __Connection Test__: [connect_example.m](./Examples/connect_example.m)

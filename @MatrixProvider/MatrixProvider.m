@@ -94,10 +94,10 @@ classdef MatrixProvider < matlab.net.http.io.ContentProvider & matlab.mixin.Copy
             end
             
             samplelength = 0;
-            if(obj.element_count < obj.num_elements)
+            if(obj.element_count <= obj.num_elements)
                 samplelength = length/obj.byte_width; %eg 2 bytes == 1 uint16
                 samplelength = min([samplelength, obj.num_elements - obj.element_count + 1]);
-            end
+           end
             
             data = [];
             if samplelength > 0
