@@ -155,8 +155,7 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             [success, response] = bn.loadData(Dataset);
 
             testCase.verifyTrue(success);
-            testCase.verifyEqual(response.StatusCode, matlab.net.http.StatusCode.OK);
-            
+
             [~,~] = bn.closeNano();
         end
         function testRunNano(testCase)
@@ -188,6 +187,59 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             testCase.verifyTrue(success);
             testCase.verifyThat(response, HasField('ID'));
             testCase.verifyEqual(sum(response.ID~=Label), 0);
+            
+            [~,~] = bn.closeNano();
+        end
+        function testRunStreamingNano(testCase)
+            %Test runStreamingNano() method
+            import matlab.unittest.constraints.HasField
+          
+            bn = BoonNanoSDK('default');
+            [~, ~] = bn.openNano('instance1');
+            
+            numericformat = 'float32';
+            featurelength = 1;
+            streamingwindow = 100;
+            minval = -4.0;
+            maxval = 4.0;
+
+            [~, config] = bn.generateConfig(featurelength, numericformat, 0.05, 0.95, minval, maxval, streamingwindow);
+            [~, ~] = bn.configureNano(config);
+            
+            %generate streaming data
+            dt = 0.01;
+            tmax=100;
+            t = 0:dt:tmax;
+            Dataset = maxval*sin(2*pi*0.5*t);
+
+            %insert anomaly
+            num_samples = numel(Dataset);
+            anomaly_pos = round(0.88*num_samples):round(0.9*num_samples);
+            delta = randn(1,num_samples).*0.01;
+            Dataset(anomaly_pos) = delta(anomaly_pos);
+
+            %run nano streaming data
+            success = false;
+            stream_response = struct;
+            chunksize = 1000;
+            numchunks = (num_samples/chunksize)-1;
+            anomaly_index = [];
+
+            for i = 0:numchunks
+                lims = [(i*chunksize):((i+1)*chunksize)] + 1;
+                [success, stream_response] = bn.runStreamingNano(Dataset(lims), 'SI');
+                anomaly_index = [anomaly_index; stream_response.SI];
+                %pause to wait for autotuning
+                pause(5);
+            end
+            
+            %Test anomaly values at known locations
+            sub_results = anomaly_index(anomaly_pos);
+            true_anomaly = [sub_results > 600];
+
+            testCase.verifyTrue(success);
+            testCase.verifyThat(stream_response, HasField('SI'));
+            testCase.verifyEqual(any(true_anomaly), true);
             
             [~,~] = bn.closeNano();
         end
@@ -490,6 +542,25 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             
             %run Nano without data loaded
             testCase.verifyThat(@() bn.runNano('ID'), Throws('MATLAB:webservices:HTTP400StatusCodeError'))
+
+            [~, ~] = bn.closeNano();
+        end
+        function testRunStreamingNanoError(testCase)
+            %Test runStreamingNano() method with invalid procedure
+            import matlab.unittest.constraints.Throws
+          
+            bn = BoonNanoSDK('default');
+            
+            %close all nanos
+            [~, response] = bn.nanoList();
+            for ii = 1:length(response)
+                [~, ~] = bn.closeNano(response(ii).instanceID);
+            end
+            
+            [~, ~] = bn.openNano('instanceRun');
+            
+            %run Nano streaming with configuring
+            testCase.verifyThat(@() bn.runStreamingNano(randn(1,100), 'SI'), Throws('MATLAB:class:invalidUsage'))
 
             [~, ~] = bn.closeNano();
         end

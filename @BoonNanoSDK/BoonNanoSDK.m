@@ -20,6 +20,7 @@
 %     autotuneConfig	- Autotune the Nano Pod configuration parameters
 %     loadData          - Send data to the Nano Pod for clustering
 %     runNano	        - Run the current Nano Pod instance with the loaded data
+%     runStreamingNano	- Send streaming data to current Nano Pod, Get Results
 %     getNanoResults	- Get results from latest Nano run
 %     getNanoStatus     - Results in relation to each cluster/overall stats
 %     getBufferStatus	- Results related to the bytes processed/in the buffer
@@ -108,9 +109,9 @@ classdef BoonNanoSDK < handle
             if(nargin < 1)
                 license_id = 'default';
             end
-            
+
             license_block = struct;
-            
+
             if ( exist(license_file, 'file') == 2 )
                 % Load license file
                 json_file = fileread(license_file);
@@ -162,15 +163,15 @@ classdef BoonNanoSDK < handle
                 end
                 obj.api_tenant = license_block.api_tenant;
             end
-            
+
             obj.url = [obj.server '/expert/v3/'];
             if ( ~contains(obj.server, 'http') )
                 obj.url = ['http://' obj.url];
             end
-            
+
             %HTTP Options
-            obj.http = matlab.net.http.HTTPOptions('ConnectTimeout',timeout,'DecodeResponse',true,'KeepAliveTimeout',Inf);
-            
+            obj.http = matlab.net.http.HTTPOptions('ConnectTimeout',timeout,'DecodeResponse',true);
+
             %Optional proxy server
             env_proxy = getenv('PROXY_SERVER');
             if(~isempty(env_proxy))
@@ -182,7 +183,7 @@ classdef BoonNanoSDK < handle
             else
                 obj.http.UseProxy = false;
             end
-            
+
             %Default Headers
             obj.http_header = matlab.net.http.HeaderField('x-token', obj.api_key,'Content-Type','application/json');
         end
@@ -226,7 +227,7 @@ classdef BoonNanoSDK < handle
                 obj.instance = '';
                 return;
             end
-            
+
             %store instance
             obj.instance = response.Body.Data.instanceID;
 
@@ -282,11 +283,11 @@ classdef BoonNanoSDK < handle
             if isfield(obj.instance_config,instance_name)
                 obj.instance_config = rmfield(obj.instance_config,instance_name);
             end
-            
+
             if ~isempty(obj.instance) && strcmp(obj.instance, instance_name)
                 obj.instance = '';
             end
-            
+
             close_response = response.Body.Data;
             success = true;
             return
@@ -304,21 +305,21 @@ classdef BoonNanoSDK < handle
 
             % check for error
             success = false;
-            
+
             % build command
             instance_cmd = [obj.url 'nanoInstances' '?api-tenant=' obj.api_tenant];
-             
+
             % list of running instances
             req = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.GET, obj.http_header);
             [response,completedrequest,~] = req.send(instance_cmd, obj.http);
-            
+
             %Check for errors
             if (~completedrequest.Completed || response.StatusCode ~= 200)
                 [error_type, error_msg] = obj.formatError(response);
                 error(error_type, error_msg);
                 return;
             end
-            
+
             list_response = response.Body.Data;
             success = true;
             return
@@ -352,14 +353,14 @@ classdef BoonNanoSDK < handle
             header = matlab.net.http.HeaderField('x-token', obj.api_key,'Content-Type','application/octet-stream');
             req = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.GET, header);
             [response,completedrequest,~] = req.send(snapshot_cmd, obj.http);
-            
+
             %Check for errors
             if (~completedrequest.Completed || response.StatusCode ~= 200)
                 [error_type, error_msg] = obj.formatError(response);
                 error(error_type, error_msg);
                 return;
             end
-            
+
             %Body of response
             snapshot_response = response.Body.Data;
 
@@ -448,7 +449,7 @@ classdef BoonNanoSDK < handle
             if (nargin < 2 || isempty(config) || ~isfield(config,'accuracy') || ~isfield(config,'percentVariation') || ~isfield(config,'features') || ~isfield(config,'numericFormat'))
               error('MATLAB:arg:invalidType','Must pass valid config as arg, call generateConfig() first');
             end
-           
+
             % build command
             config_cmd = [obj.url 'clusterConfig/' obj.instance '?api-tenant=' obj.api_tenant];
 
@@ -464,16 +465,16 @@ classdef BoonNanoSDK < handle
                 error(error_type, error_msg);
                 return;
             end
-            
+
             %Body of response
             config_response = response.Body.Data;
-            
+
             %Check that configuration took
             if(config_response.accuracy ~= config_response.accuracy)
                 warning('Configuration Response From Server Does Not Match Request');
                 return;
             end
-               
+
 
             %instance configurations
             if ~isfield(obj.instance_config,obj.instance)
@@ -653,7 +654,7 @@ classdef BoonNanoSDK < handle
             if ~isempty(exclusions)
                 config_cmd = [config_cmd '&exclusions=' exclusions];
             end
-            
+
             %request autotune
             body = matlab.net.http.MessageBody('0');
             req = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.POST, obj.http_header, body);
@@ -665,7 +666,7 @@ classdef BoonNanoSDK < handle
                 error(error_type, error_msg);
                 return;
             end
-            
+
             %Body of response
             autotune_response = response.Body.Data;
 
@@ -710,7 +711,7 @@ classdef BoonNanoSDK < handle
                 error(error_type, error_msg);
                 return;
             end
-            
+
             %Body of response
             config_response = response.Body.Data;
             success = true;
@@ -754,7 +755,7 @@ classdef BoonNanoSDK < handle
             if( isempty(obj.instance) )
                 error('MATLAB:class:invalidUsage','No Active Instances. Call openNano() first.');
             end
-            
+
             if isfield(obj.instance_config, obj.instance)
                 %instance configurations
                 inst_config = obj.instance_config.(obj.instance);
@@ -764,22 +765,22 @@ classdef BoonNanoSDK < handle
                 if(nfeatures ~= inst_config.feature_count)
                    warning('BoonNanoSDK is Row Major, Loading %d Samples, %d Features', nsamples, nfeatures);
                 end
-            
+
                 %set numeric format for upload
                 numeric_format = inst_config.numeric_format;
             else
                 %infer feature count and type
                 [~, feature_count] = size(data);
                 data_format = class(data);
-                
+
                 %create temp configuration
                 [~, config] = obj.generateConfig(feature_count, data_format);
                 numeric_format = config.numericFormat;
-                
+
                 %flash warning
                 warning('Nano Pod is Not Configured. Inferring Feature Count = %d, Numeric Format = %s', feature_count, numeric_format);
                 [~, ~] = obj.configureNano(config);
-                
+
             end
 
             % build command
@@ -790,13 +791,17 @@ classdef BoonNanoSDK < handle
             multipart = matlab.net.http.io.MultipartFormProvider('data',mat_provider);
             header = matlab.net.http.HeaderField('x-token', obj.api_key,'Content-Type','multipart/form-data');
             req = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.POST,header,multipart);
-            [load_response,completedrequest,~] = req.send(load_cmd, obj.http);
+            [response,completedrequest,~] = req.send(load_cmd, obj.http);
 
             % check for error
-            if (~completedrequest.Completed || load_response.StatusCode ~= 200)
-                display(load_response);
+            if (~completedrequest.Completed || response.StatusCode ~= 200)
+                [error_type, error_msg] = obj.formatError(response);
+                error(error_type, error_msg);
                 return;
             end
+
+            %Body of response
+            load_response = response.Body.Data;
             success = true;
 
             return;
@@ -859,9 +864,101 @@ classdef BoonNanoSDK < handle
                 error(error_type, error_msg);
                 return;
             end
-            
+
             %Body of response
             run_response = response.Body.Data;
+            success = true;
+
+            return;
+        end
+
+        function [success, stream_response] = runStreamingNano(obj, data, results)
+        % runStreamingNano: Send data to the Nano Pod for streaming clustering
+        %
+        % Args:
+        %   data (matrix): Data to load
+        %                  Single dimensional data (row or column vector)
+        %                  Or Multidimensional data (row major)
+        %
+        %   results (char): Comma seperated result identifiers
+        %         ID = cluster ID
+        %         SI = smoothed anomaly index
+        %         RI = raw anomaly index
+        %         FI = frequency index
+        %         DI = distance index
+        %
+        % Returns:
+        %   success (bool): true if api call successful
+        %   stream_response (struct): Response information if success = true
+        %
+            %initialize
+            success = false;
+            stream_response = struct;
+
+            % Optional arguments
+            if(nargin<2 || isempty(data) || ~isnumeric(data))
+                error('MATLAB:arg:invalidType','Must pass data matrix as argument');
+            end
+
+            %check for instances
+            if( isempty(obj.instance) )
+                error('MATLAB:class:invalidUsage','No Active Instances. Call openNano() first.');
+            end
+
+            if ~isfield(obj.instance_config, obj.instance)
+                error('MATLAB:class:invalidUsage','Instance Not Configured. Call configureNano() first.');
+            end
+
+            %instance configurations
+            inst_config = obj.instance_config.(obj.instance);
+
+            %check data dimensions TODO
+            total_samples = numel(data);
+            [nrows, ncols] = size(data);
+
+            %set numeric format for upload
+            numeric_format = inst_config.numeric_format;
+
+            %Requested Results
+            if strcmp(results, 'All')
+                results_str = 'ID,SI,RI,FI,DI';
+            elseif(isempty(results))
+                results_str = results;
+            else
+                results_split = split(results,',');
+                valid = {'ID','SI','RI','FI','DI'};
+                for i = 1:length(results_split)
+                   isin = contains(results_split(i),valid);
+                   if(~any(isin(:)) )
+                       error('MATLAB:arg:invalidType','unknown result %s found in results parameter', string(results_split(i)));
+                   end
+                end
+                results_str = results;
+            end
+
+
+            % build streaming command
+            stream_cmd = [obj.url 'nanoRunStreaming/' obj.instance '?api-tenant=' obj.api_tenant '&fileType=raw' '&gzip=false'];
+            if ~isempty(results)
+                stream_cmd = [stream_cmd '&results=' results_str];
+            end
+
+            %format multi part message
+            mat_provider = MatrixProvider(data, numeric_format);
+            multipart = matlab.net.http.io.MultipartFormProvider('data',mat_provider);
+            header = matlab.net.http.HeaderField('x-token', obj.api_key,'Content-Type','multipart/form-data');
+            req = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.POST,header,multipart);
+            [response,completedrequest,~] = req.send(stream_cmd, obj.http);
+
+            % check for error
+            if (~completedrequest.Completed || response.StatusCode ~= 200)
+                [error_type, error_msg] = obj.formatError(response);
+                error(error_type, error_msg);
+                return;
+            end
+
+            %Body of response
+            stream_response = response.Body.Data;
             success = true;
 
             return;
@@ -924,7 +1021,7 @@ classdef BoonNanoSDK < handle
                 error(error_type, error_msg);
                 return;
             end
-            
+
             %Body of response
             results_response = response.Body.Data;
             success = true;
@@ -996,7 +1093,7 @@ classdef BoonNanoSDK < handle
                 error(error_type, error_msg);
                 return;
             end
-            
+
             % Body of response
             status_response = response.Body.Data;
             success = true;
@@ -1022,7 +1119,7 @@ classdef BoonNanoSDK < handle
 
             success = false;
             version_response = struct;
-            
+
             % build command (minus the v3 portion)
             version_cmd = [obj.url(1:end-3) 'version' '?api-tenant=' obj.api_tenant];
 
@@ -1036,7 +1133,7 @@ classdef BoonNanoSDK < handle
                 error(error_type, error_msg);
                 return;
             end
-            
+
             % Body of response
             version_response = response.Body.Data;
             success = true;
@@ -1057,7 +1154,7 @@ classdef BoonNanoSDK < handle
 
             success = false;
             status_response = struct;
-            
+
             % build command
             status_cmd = [obj.url 'bufferStatus/' obj.instance '?api-tenant=' obj.api_tenant];
 
@@ -1071,21 +1168,21 @@ classdef BoonNanoSDK < handle
                 error(error_type, error_msg);
                 return;
             end
-            
+
             % Body of response
             status_response = response.Body.Data;
             success = true;
-            
+
             return;
         end
 
     end
-    
+
     methods (Access = private)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%% Utility Methods
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+
         function [error_type, error_msg] = formatError(~, response)
         % formatError: Format error codes from HTTP Response
         %
@@ -1099,7 +1196,7 @@ classdef BoonNanoSDK < handle
             error_type = ['MATLAB:webservices:HTTP' int2str(response.StatusCode) 'StatusCodeError'];
             error_msg = ['Error: ' int2str(response.StatusCode) ' ' char(response.StatusLine.ReasonPhrase)];
         end
-        
+
         function boolstring = bool2char(~, boolean)
         % bool2char: Converts bool to 'true' or 'false' char arrays
         %
