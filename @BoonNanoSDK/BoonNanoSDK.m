@@ -164,6 +164,7 @@ classdef BoonNanoSDK < handle
                 obj.api_tenant = license_block.api_tenant;
             end
 
+            %Base URL
             obj.url = [obj.server '/expert/v3/'];
             if ( ~contains(obj.server, 'http') )
                 obj.url = ['http://' obj.url];
@@ -718,8 +719,93 @@ classdef BoonNanoSDK < handle
 
             return;
         end
+        
+        function [success, state_response] = setLearningState(obj, enable)
+        % setLearningState Turn learning on or off
+        %
+        % Args: 
+        %   enable (boolean): Set the learning state of the nano on or off
+        %
+        % Returns:
+        %   success (bool): true if api call succesful
+        %   state_response (bool): Current state of learning
+        %
 
+            success = false;
+            state_response = struct;
+            if( isempty(obj.instance) )
+                error('MATLAB:class:invalidUsage','No Active Instances. Call openNano() first.');
+            end
+            
+            if(nargin < 2)
+                enable = false;
+            end
 
+            % build command
+            learn_cmd = [obj.url 'learning/' obj.instance '?api-tenant=' obj.api_tenant '&enable=' obj.bool2char(enable)];
+
+            % Post nano learning state
+            body = matlab.net.http.MessageBody('0');
+            req = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.POST, obj.http_header, body);
+            [response,completedrequest,~] = req.send(learn_cmd, obj.http);
+
+            % check for errors
+            if (~completedrequest.Completed || response.StatusCode ~= 200)
+                [error_type, error_msg] = obj.formatError(response);
+                error(error_type, error_msg);
+                return;
+            end
+
+            %Body of response
+            state_response = response.Body.Data;
+            success = true;
+
+            return;
+        end
+
+        function [success, state_response] = getLearningState(obj)
+        % getLearningState Get current learning state
+        %
+        % Args: 
+        %   (empty)
+        %
+        % Returns:
+        %   success (bool): true if api call succesful
+        %   state_response (bool): Current state of learning
+        %
+
+            success = false;
+            state_response = struct;
+            if( isempty(obj.instance) )
+                error('MATLAB:class:invalidUsage','No Active Instances. Call openNano() first.');
+            end
+            
+            if(nargin < 2)
+                enable = false;
+            end
+
+            % build command
+            learn_cmd = [obj.url 'learning/' obj.instance '?api-tenant=' obj.api_tenant];
+
+            % Post nano learning state
+            req = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.GET, obj.http_header);
+            [response,completedrequest,~] = req.send(learn_cmd, obj.http);
+
+            % check for errors
+            if (~completedrequest.Completed || response.StatusCode ~= 200)
+                [error_type, error_msg] = obj.formatError(response);
+                error(error_type, error_msg);
+                return;
+            end
+
+            %Body of response
+            state_response = response.Body.Data;
+            success = true;
+
+            return;
+        end
+        
+        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%% Loading Data and Clustering
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
