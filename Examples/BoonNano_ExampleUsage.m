@@ -110,6 +110,18 @@ else
     fprintf('Nano Run Failed \n');
 end
 
+%% Turn learning off and on again
+
+[success, ~] = bn.setLearningState(false);
+if(success)
+    [~, learn_response] = bn.getLearningState();
+    fprintf('Learning State = %d \n', learn_response);
+end
+
+[success, learn_response] = bn.setLearningState(true);
+if(success)
+    fprintf('Learning State = %d \n', learn_response);
+end
 
 %% Plot Clustering Results
 

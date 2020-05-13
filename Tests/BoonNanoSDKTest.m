@@ -190,6 +190,45 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             
             [~,~] = bn.closeNano();
         end
+        function testLearningMode(testCase)
+            %Test setLearningState() method
+            import matlab.unittest.constraints.HasField
+          
+            bn = BoonNanoSDK('default');
+            instance_name = 'instance1';
+            [~, ~] = bn.openNano(instance_name);
+            
+            percentVariation = 0.05;
+            accuracy = 0.99;
+            numericFormat = 'float32';
+            featurelength = 100;
+            minVal = -300.0;
+            maxVal = 600.0;
+
+            [~, config] = bn.generateConfig(featurelength, numericFormat, percentVariation, accuracy, minVal, maxVal, 1);
+            [~, ~] = bn.configureNano(config);
+            
+            numTemplates = 3;
+            numMoons = 10; 
+            [Dataset, Label] = BoonNanoSDKTest.GenerateData(numTemplates, numMoons, featurelength, minVal, maxVal, percentVariation);
+            
+            [~, ~] = bn.loadData(Dataset);
+            [~, ~] = bn.runNano('ID');
+            
+            [success, learn_state] = bn.setLearningState(false);
+            
+            %load new junk data
+            NewData = ones(1,featurelength)*maxVal;
+            [~, ~] = bn.loadData(NewData);
+            [~, response] = bn.runNano('ID');
+
+            testCase.verifyTrue(success);
+            testCase.verifyFalse(learn_state);
+            testCase.verifyThat(response, HasField('ID'));
+            testCase.verifyEqual(response.ID(1), 0);
+            
+            [~,~] = bn.closeNano();
+        end
         function testRunStreamingNano(testCase)
             %Test runStreamingNano() method
             import matlab.unittest.constraints.HasField
@@ -483,6 +522,15 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             testCase.verifyThat(@() bn.configureNano(config), Throws('MATLAB:arg:invalidType'))
             
             [~, ~] = bn.closeNano();
+        end
+        function testLearningModeError(testCase)
+            %Test setLearningState() method with invalid procedure
+            import matlab.unittest.constraints.Throws
+          
+            bn = BoonNanoSDK('default');
+
+            %configure non-existent nano instance
+            testCase.verifyThat(@() bn.setLearningState(false), Throws('MATLAB:class:invalidUsage'))
         end
         function autotuneConfigError(testCase)
             %Test autotuneConfig() method with invalid procedure
