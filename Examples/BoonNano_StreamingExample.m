@@ -35,7 +35,7 @@ feature_length = 1; %one sensor
 streaming_window = 100; %moving window of 100 samples
 
 %Generate struct
-[~, config] = bn.generateConfig(feature_length, 'float32', percent_variation, accuracy, minval, maxval, streaming_window);
+[~, config] = bn.generateConfig(feature_length, 'float32', 'streaming', percent_variation, accuracy, streaming_window, minval, maxval);
 
 %Send to api
 [success, config_response] = bn.configureNano(config);
@@ -100,7 +100,7 @@ end
 
 figure(1)
 clf
-suptitle('Streaming Anomaly Test');
+sgtitle('Streaming Anomaly Test');
 s1 = subplot(2,1,1);
 plot(Dataset, 'Color', 'b', 'LineWidth', 2);
 axis(s1, [0,num_samples,minval,maxval])

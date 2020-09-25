@@ -37,7 +37,7 @@ accuracy = 0.99;
 feature_length = 100;
 
 %Generate struct
-[~, config] = bn.generateConfig(feature_length, 'uint16', percent_variation, accuracy, minval, maxval, 1);
+[~, config] = bn.generateConfig(feature_length, 'uint16', 'batch', percent_variation, accuracy, 1, minval, maxval);
 
 %Send to api
 [success, config_response] = bn.configureNano(config);
@@ -93,7 +93,8 @@ end
 [success, autotune_response] = bn.autotuneConfig();
 
 if success
-    fprintf('Autotune completed. PV = %.3f \n', autotune_response.percentVariation);
+    [success, config_response] = bn.getConfig();
+    fprintf('Autotune completed. PV = %.3f \n', config_response.percentVariation);
 else
      fprintf('Autotune Failed \n');
 end

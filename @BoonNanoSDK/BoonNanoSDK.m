@@ -2,6 +2,8 @@
 % BoonNanoSDK: Handle class containing functions for interacting with the
 % BoonNano Rest API.
 %
+% API Version: 3.1
+%
 % This is the primary handle to manage a Nano Pod instance.
 % This SDK requires a valid license from Boon Logic Inc.
 % Contact Boon Logic Inc. to receive a license.
@@ -18,6 +20,8 @@
 %     generateConfig    - Generate formatted struct containing configuration
 %     getConfig         - Get current Nano Pod configuration parameters
 %     autotuneConfig	- Autotune the Nano Pod configuration parameters
+%     setLearningState  - Set the learning mode on or off
+%     getLearningState  - Get the current learning mode
 %     loadData          - Send data to the Nano Pod for clustering
 %     runNano	        - Run the current Nano Pod instance with the loaded data
 %     runStreamingNano	- Send streaming data to current Nano Pod, Get Results
@@ -111,6 +115,14 @@ classdef BoonNanoSDK < handle
             end
 
             license_block = struct;
+            
+            
+            % Environment License File
+            license_file_env = getenv('BOON_LICENSE_FILE');
+            if(~isempty(license_file_env))
+                % license file path was specified in environment
+                license_file = license_file_env;
+            end
 
             if ( exist(license_file, 'file') == 2 )
                 % Load license file
@@ -447,7 +459,7 @@ classdef BoonNanoSDK < handle
                 error('MATLAB:class:invalidUsage','No Active Instances To Configure. Call openNano() first.');
             end
 
-            if (nargin < 2 || isempty(config) || ~isfield(config,'accuracy') || ~isfield(config,'percentVariation') || ~isfield(config,'features') || ~isfield(config,'numericFormat'))
+            if (nargin < 2 || isempty(config) || ~isfield(config,'clusterMode') || ~isfield(config,'numericFormat') || ~isfield(config,'features'))
               error('MATLAB:arg:invalidType','Must pass valid config as arg, call generateConfig() first');
             end
 
@@ -470,13 +482,6 @@ classdef BoonNanoSDK < handle
             %Body of response
             config_response = response.Body.Data;
 
-            %Check that configuration took
-            if(config_response.accuracy ~= config_response.accuracy)
-                warning('Configuration Response From Server Does Not Match Request');
-                return;
-            end
-
-
             %instance configurations
             if ~isfield(obj.instance_config,obj.instance)
                 obj.instance_config.(obj.instance) = struct;
@@ -489,21 +494,39 @@ classdef BoonNanoSDK < handle
             return;
         end
 
-        function [success, config] = generateConfig(obj, feature_count, numeric_format, percent_variation, accuracy, min, max, streaming_window, weight, labels)
+        function [success, config] = generateConfig(obj, feature_count, numeric_format, cluster_mode,...
+                                                    percent_variation, accuracy, streaming_window, min_val, max_val, weight, label,...
+                                                    autotunePV, autotuneRange, autotune_by_feature, autotune_max_clusters, exclusions,...
+                                                    streaming_autotune, streaming_buffer, learning_numerator, learning_denominator, learning_max_clusters, learning_samples)
         % generateConfig Generate formatted struct containing configuration
         %
         % Args:
-        %   feature_count (int): number of features per sample
-        %   numeric_format (char): 'uint16', 'int16', or 'float32'
+        %    feature_count (int): number of features per vector
+        %    numeric_format (str): numeric type of data (one of "float32", "uint16", or "int16")
         %
         % Optional Args:
-        %   percent_variation (float): Variation between clusters (0.05)
-        %   accuracy (float): Intra cluster accuracy (0.99)
-        %   min (vector): min value per feature (0)
-        %   max (vector): max value per feature (10)
-        %   streaming_window (int): sliding window for streaming data (1)
-        %   weight (vector): relative weightings [1]
-        %   labels (char): feature labels ('')
+        %    cluster_mode (char): 'batch' single inference, 'streaming' inference based on history
+        %    percent_variation (float): amount of variation allowed within clusters
+        %    accuracy (float): statistical accuracy of the clusters
+        %    streaming_window (integer): number of consecutive vectors treated as one inference (parametric parameter)
+        %    min_val (array): the value that should be considered the minimum value for this feature. This
+        %        can be set to a value larger than the actual min if you want to treat all value less
+        %        than that as the same (for instance, to keep a noise spike from having undue influence
+        %        in the clustering.  a single element list assigns all features with same min_val
+        %    max_val (array): corresponding maximum value, a single element list assigns all features with same max_val
+        %    weight (array): weight for this feature, a single element list assigns all features with same weight
+        %    label (array): list of labels to assign to features
+        %    autotunePV (bool): whether to autotune the percent variation
+        %    autotuneRange (bool): whether to autotune the min and max values
+        %    autotune_by_feature (bool): whether to have individually set min and max values for each feature
+        %    autotune_max_clusters (int): max number of clusters allowed
+        %    exclusions (list): features to exclude while autotuning
+        %    streaming_autotune (bool): whether to autotune while in streaming mode
+        %    streaming_buffer (int): number of samples to autotune on
+        %    learning_numerator (int): max number of new clusters learned
+        %    learning_denominator (int): number of samples over which the new clusters are learned
+        %    learning_max_clusters (int): max number of clusters before turning off learning
+        %    learning_samples (int): max number of samples before turning off learning
         %
         % Returns:
         %   success (bool): success = true if all parameters are valid
@@ -517,28 +540,64 @@ classdef BoonNanoSDK < handle
             if(nargin < 3)
                 error('MATLAB:arg:invalidType','Must specify feature_count and numeric_format');
             end
-            if(nargin < 4)
+            if( ~exist('cluster_mode','var') )
+                cluster_mode = 'batch';
+            end
+            if( ~exist('percent_variation','var') )
                 percent_variation = 0.05;
             end
-            if(nargin < 5)
+            if( ~exist('accuracy','var') )
                 accuracy = 0.99;
             end
-            if(nargin < 6)
-                min = 1;
-            end
-            if(nargin < 7)
-                max = 10;
-            end
-            if(nargin < 8)
+            if( ~exist('streaming_window','var') )
                 streaming_window = 1;
             end
-            if(nargin < 9)
+            if( ~exist('min_val','var') )
+                min_val = 0;
+            end
+            if( ~exist('max_val','var') )
+                max_val = 1;
+            end
+            if( ~exist('weight','var') )
                 weight = 1;
             end
-            if(nargin < 10)
-                labels = '';
+            if( ~exist('label','var') )
+                label = '';
             end
-
+            if( ~exist('autotunePV','var') )
+                autotunePV = true;
+            end
+            if( ~exist('autotuneRange','var') )
+                autotuneRange = true;
+            end
+            if( ~exist('autotune_by_feature','var') )
+                autotune_by_feature = true;
+            end
+            if( ~exist('autotune_max_clusters','var') )
+                autotune_max_clusters = 1000;
+            end
+            if( ~exist('exclusions','var') )
+                exclusions = '';
+            end
+            if( ~exist('streaming_autotune','var') )
+                streaming_autotune = true;
+            end
+            if( ~exist('streaming_buffer','var') )
+                streaming_buffer = 10000;
+            end
+            if( ~exist('learning_numerator','var') )
+                learning_numerator = 10;
+            end
+            if( ~exist('learning_denominator','var') )
+                learning_denominator = 1000;
+            end
+            if( ~exist('learning_max_clusters','var') )
+                learning_max_clusters = 1000;
+            end
+            if( ~exist('learning_samples','var') )
+                learning_samples = 1000000;
+            end
+            
             %align numeric format
             cmp = strcmp(numeric_format,{'float', 'double', 'single'});
             if any(cmp(:))
@@ -563,64 +622,97 @@ classdef BoonNanoSDK < handle
             end
 
             %check dimensions of args
-            if(length(max) ~= 1 && length(max) ~= feature_count)
-                error('MATLAB:arg:invalidType','length(max) must match feature_count');
+            if(length(max_val) ~= 1 && length(max_val) ~= feature_count)
+                error('MATLAB:arg:invalidType','length(max_val) must match feature_count');
             end
-            if(length(min) ~= 1 && length(min) ~= feature_count)
-                error('MATLAB:arg:invalidType','length(min) must match feature_count');
+            if(length(min_val) ~= 1 && length(min_val) ~= feature_count)
+                error('MATLAB:arg:invalidType','length(min_val) must match feature_count');
             end
             if(length(weight) ~= 1 && length(weight) ~= feature_count)
                 error('MATLAB:arg:invalidType','length(weight) must match feature_count');
             end
 
             %initialize configuration structure
-            temparray = {};
+            features = {};
             for x = 1:feature_count
                 temp_feature = struct;
-                % max
-                if (length(max) == 1)
-                    temp_feature.maxVal = max;
+                % max val
+                if (length(max_val) == 1)
+                    if(strcmp(numeric_format, 'float32'))
+                        temp_feature.maxVal = single(max_val);
+                    else
+                        temp_feature.maxVal = int32(max_val);
+                    end
                 else  %the max vals are given as a list
-                    temp_feature.maxVal = max(x);
+                    if(strcmp(numeric_format, 'float32'))
+                        temp_feature.maxVal = single(max_val(x));
+                    else
+                        temp_feature.maxVal = int32(max_val(x));
+                    end
                 end
-                % min
-                if (length(min) == 1)
-                    temp_feature.minVal = min;
+                % min val
+                if (length(min_val) == 1)
+                    if(strcmp(numeric_format, 'float32'))
+                        temp_feature.minVal = single(min_val);
+                    else
+                        temp_feature.minVal = int32(min_val);
+                    end
                 else % the min vals are given as a list
-                    temp_feature.minVal = min(x);
+                    if(strcmp(numeric_format, 'float32'))
+                        temp_feature.minVal = single(min_val(x));
+                    else
+                        temp_feature.minVal = int32(min_val(x));
+                    end
                 end
                 % weights
                 if (length(weight) == 1)
-                    temp_feature.weight = uint16(weight);
+                    temp_feature.weight = int32(weight);
                 else % the weight vals are given as a list
-                    temp_feature.weight = uint16(weight(x));
+                    temp_feature.weight = int32(weight(x));
                 end
                 % labels
-                if (~isempty(labels) && ~isempty(labels(x)))
-                    temp_feature.label = labels(x);
+                if (~isempty(label) && ~isempty(label(x)))
+                    temp_feature.label = label(x);
                 end
-                temp_array{x} = temp_feature;
+                features{x} = temp_feature;
             end
 
             %build json struct
-            config.accuracy = accuracy;
-            config.features = temp_array;
+            config.clusterMode = cluster_mode;
             config.numericFormat = numeric_format;
             config.percentVariation = percent_variation;
-            config.streamingWindowSize = streaming_window;
+            config.streamingWindowSize = int32(streaming_window);
+            config.accuracy = accuracy;
+            config.features = features;
+            
+            %Autotune Parameters
+            config.autoTuning = struct;
+            config.autoTuning.autoTunePV = autotunePV;
+            config.autoTuning.autoTuneRange = autotuneRange;
+            config.autoTuning.autoTuneByFeature = autotune_by_feature;
+            config.autoTuning.maxClusters = int32(autotune_max_clusters);
+            if( ~isempty(exclusions) )
+                config.autoTuning.exclusions = exclusions;
+            end
+
+            %Streaming Parameters
+            config.streaming = struct;
+            config.streaming.enableAutoTuning = streaming_autotune;
+            config.streaming.samplesToBuffer = int32(streaming_buffer);
+            config.streaming.learningRateNumerator = int32(learning_numerator);
+            config.streaming.learningRateDenominator = int32(learning_denominator);
+            config.streaming.learningMaxClusters = int32(learning_max_clusters);
+            config.streaming.learningMaxSamples = int32(learning_samples);
+
+
+            
             success = true;
         end
 
-        function [success, autotune_response] = autotuneConfig(obj, autotune_pv, autotune_range, by_feature, exclusions)
+        function [success, autotune_response] = autotuneConfig(obj)
         % autotuneConfig Autotune the Nano Pod configuration parameters
         %
         % Args: (empty)
-        %
-        % Optional Args:
-        %   autotune_pv (bool): Autotune percent variation (true)
-        %   autotune_range (bool): Autotune min and max (true)
-        %   by_feature (bool): Autotune each feature seperately (false)
-        %   exclusions (char): Feature columns to ignore (empty)
         %
         % Returns:
         %   success (bool): true if api call succesful
@@ -635,27 +727,11 @@ classdef BoonNanoSDK < handle
                 error('MATLAB:class:invalidUsage','No Active Instances To Autotune. Call openNano() first.');
             end
 
-            %Parse Args
-            if (nargin < 2)
-                autotune_pv=true;
-            end
-            if (nargin < 3)
-                autotune_range=true;
-            end
-            if (nargin < 4)
-                by_feature=false;
-            end
-            if (nargin < 5)
-                exclusions='';
-            end
-
 
             % build command
-            config_cmd = [obj.url 'autoTuneConfig/' obj.instance '?api-tenant=' obj.api_tenant '&byFeature=' obj.bool2char(by_feature) '&autoTunePV=' obj.bool2char(autotune_pv) '&autoTuneRange=' obj.bool2char(autotune_range)];
-            if ~isempty(exclusions)
-                config_cmd = [config_cmd '&exclusions=' exclusions];
-            end
-
+            config_cmd = [obj.url 'autoTune/' obj.instance '?api-tenant=' obj.api_tenant];
+            
+                        
             %request autotune
             body = matlab.net.http.MessageBody('0');
             req = matlab.net.http.RequestMessage(matlab.net.http.RequestMethod.POST, obj.http_header, body);
@@ -667,16 +743,6 @@ classdef BoonNanoSDK < handle
                 error(error_type, error_msg);
                 return;
             end
-
-            %Body of response
-            autotune_response = response.Body.Data;
-
-            %instance configurations
-            if ~isfield(obj.instance_config,obj.instance)
-                obj.instance_config.(obj.instance) = struct;
-            end
-            obj.instance_config.(obj.instance).numeric_format = autotune_response.numericFormat;
-            obj.instance_config.(obj.instance).feature_count = length(autotune_response.features);
 
             success = true;
 
@@ -1024,7 +1090,7 @@ classdef BoonNanoSDK < handle
 
 
             % build streaming command
-            stream_cmd = [obj.url 'nanoRunStreaming/' obj.instance '?api-tenant=' obj.api_tenant '&fileType=raw' '&gzip=false'];
+            stream_cmd = [obj.url 'nanoRunStreaming/' obj.instance '?api-tenant=' obj.api_tenant '&fileType=raw'];
             if ~isempty(results)
                 stream_cmd = [stream_cmd '&results=' results_str];
             end

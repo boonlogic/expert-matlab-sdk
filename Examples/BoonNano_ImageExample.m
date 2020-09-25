@@ -89,7 +89,7 @@ accuracy = 0.99;
 feature_length = num_bins; %%Histogram bins
 
 %Generate struct
-[~, config] = bn.generateConfig(feature_length, 'uint16', percent_variation, accuracy, minval, maxval, 1);
+[~, config] = bn.generateConfig(feature_length, 'uint16', 'batch', percent_variation, accuracy, 1, minval, maxval);
 
 %Send to api
 [success, config_response] = bn.configureNano(config);
@@ -155,4 +155,4 @@ title('Raw Image')
 
 
 %% close and delete this instance
-[success, ~] = bn.closeNano();
+[success, ~] = bn.closeNano('imagerun');
