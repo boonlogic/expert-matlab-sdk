@@ -93,8 +93,9 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             percentVariation = 0.05;
             accuracy = 0.99;
             numericFormat = 'uint16';
+            clusterMode = 'batch';
 
-            [~, config] = bn.generateConfig(100, numericFormat, percentVariation, accuracy, 0, 1000, 1);
+            [~, config] = bn.generateConfig(100, numericFormat, clusterMode, percentVariation, accuracy, 1, 0, 1000);
             [success, response] = bn.configureNano(config);
 
             testCase.verifyTrue(success);
@@ -118,11 +119,12 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             percentVariation = 0.05;
             accuracy = 0.99;
             numericFormat = 'uint16';
+            clusterMode = 'batch';
             featureLength = 100;
             weights = ones(1,featureLength);
             weights(50) = 100;
 
-            [~, config] = bn.generateConfig(featureLength, numericFormat, percentVariation, accuracy, 0, 1000, 1, weights);
+            [~, config] = bn.generateConfig(featureLength, numericFormat, clusterMode, percentVariation, accuracy, 1, 0, 1000, weights);
             [success, response] = bn.configureNano(config);
 
             testCase.verifyTrue(success);
@@ -146,7 +148,7 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             
             featurelength = 100;
 
-            [~, config] = bn.generateConfig(featurelength, 'int16', 0.05, 0.99, -100, 100, 1);
+            [~, config] = bn.generateConfig(featurelength, 'int16', 'batch', 0.05, 0.99, 1, -100, 100);
             [~, ~] = bn.configureNano(config);
             
             numSamples = 30;
@@ -173,7 +175,7 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             minVal = -300.0;
             maxVal = 600.0;
 
-            [~, config] = bn.generateConfig(featurelength, numericFormat, percentVariation, accuracy, minVal, maxVal, 1);
+            [~, config] = bn.generateConfig(featurelength, numericFormat, 'batch', percentVariation, accuracy, 1, minVal, maxVal);
             [~, ~] = bn.configureNano(config);
             
             numTemplates = 3;
@@ -205,7 +207,7 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             minVal = -300.0;
             maxVal = 600.0;
 
-            [~, config] = bn.generateConfig(featurelength, numericFormat, percentVariation, accuracy, minVal, maxVal, 1);
+            [~, config] = bn.generateConfig(featurelength, numericFormat, 'batch', percentVariation, accuracy, 1, minVal, maxVal);
             [~, ~] = bn.configureNano(config);
             
             numTemplates = 3;
@@ -242,7 +244,9 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             minval = -4.0;
             maxval = 4.0;
 
-            [~, config] = bn.generateConfig(featurelength, numericformat, 0.05, 0.95, minval, maxval, streamingwindow);
+            [~, config] = bn.generateConfig(featurelength, numericformat, 'streaming', 0.05, 0.95, streamingwindow, minval, maxval, 1, '', ...
+                                            true, true, true, 1000, '',...
+                                            false, 1000, 10, 1000, 1000, 100000 );
             [~, ~] = bn.configureNano(config);
             
             %generate streaming data
@@ -268,8 +272,6 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
                 lims = [(i*chunksize):((i+1)*chunksize)] + 1;
                 [success, stream_response] = bn.runStreamingNano(Dataset(lims), 'SI');
                 anomaly_index = [anomaly_index; stream_response.SI];
-                %pause to wait for autotuning
-                pause(5);
             end
             
             %Test anomaly values at known locations
@@ -298,7 +300,7 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             minVal = 0;
             maxVal = 500;
 
-            [~, config] = bn.generateConfig(featurelength, numericFormat, percentVariation, accuracy, minVal, maxVal, 1);
+            [~, config] = bn.generateConfig(featurelength, numericFormat, 'batch', percentVariation, accuracy, 1, minVal, maxVal);
             [~, ~] = bn.configureNano(config);
             
             numTemplates = 3;
@@ -307,13 +309,15 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             
             [~, ~] = bn.loadData( uint16(Dataset) );
             
-            [success, response] = bn.autotuneConfig();
-
+            [success, ~] = bn.autotuneConfig();
             testCase.verifyTrue(success);
-            testCase.verifyThat(response, HasField('percentVariation'));
-            testCase.verifyThat(response, HasField('accuracy'));
+            
+            [success, config_response] = bn.getConfig();
+            testCase.verifyTrue(success);
+            testCase.verifyThat(config_response, HasField('percentVariation'));
+            testCase.verifyThat(config_response, HasField('accuracy'));
             %check for reasonable percent variation
-            testCase.verifyThat(abs(percentVariation-response.percentVariation), IsLessThan(0.3))
+            testCase.verifyThat(abs(percentVariation-config_response.percentVariation), IsLessThan(0.3))
             
             [~,~] = bn.closeNano();
         end
@@ -332,7 +336,7 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             minVal = -300.0;
             maxVal = 600.0;
 
-            [~, config] = bn.generateConfig(featurelength, numericFormat, percentVariation, accuracy, minVal, maxVal, 1);
+            [~, config] = bn.generateConfig(featurelength, numericFormat, 'batch', percentVariation, accuracy, 1, minVal, maxVal);
             [~, ~] = bn.configureNano(config);
             
             numTemplates = 3;
@@ -368,7 +372,7 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             minVal = -200.0;
             maxVal = 800.0;
 
-            [~, config] = bn.generateConfig(featurelength, numericFormat, percentVariation, accuracy, minVal, maxVal, 1);
+            [~, config] = bn.generateConfig(featurelength, numericFormat, 'batch', percentVariation, accuracy, 1, minVal, maxVal);
             [~, ~] = bn.configureNano(config);
             
             numTemplates = 5;
@@ -397,14 +401,14 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             percentVariation = 0.079;
             accuracy = 0.93;
 
-            [~, config] = bn.generateConfig(100, 'uint16', percentVariation, accuracy, 0, 100, 1);
+            [~, config] = bn.generateConfig(100, 'uint16', 'batch', percentVariation, accuracy, 1, 0, 100);
             [~, ~] = bn.configureNano(config);
             
             %save this config
             success1 = bn.saveNano('tester.tar');
             
             %change config
-            [~, config] = bn.generateConfig(50, 'int16', 0.034, 0.98, -100, 300, 1);
+            [~, config] = bn.generateConfig(50, 'int16', 'batch', 0.034, 0.98, 1, -100, 300);
             [~, ~] = bn.configureNano(config);
             
             %restore from save
@@ -502,7 +506,7 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             bn = BoonNanoSDK('default');
             
             %generate config
-            [~, config] = bn.generateConfig(100, 'uint16', 0.05, 0.99, 0, 1000, 1);
+            [~, config] = bn.generateConfig(100, 'uint16', 'batch', 0.05, 0.99, 1, 0, 1000);
 
             %configure non-existent nano instance
             testCase.verifyThat(@() bn.configureNano(config), Throws('MATLAB:class:invalidUsage'))
@@ -585,7 +589,7 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             end
             
             [~, ~] = bn.openNano('instanceRun');
-            [~, ~] = bn.generateConfig(100, 'uint16', 0.05, 0.99, 0, 1000, 1);
+            [~, ~] = bn.generateConfig(100, 'uint16', 'batch', 0.05, 0.99, 1, 0, 1000);
            
             
             %run Nano without data loaded
@@ -625,7 +629,7 @@ classdef BoonNanoSDKTest < matlab.unittest.TestCase
             end
             
             [~, ~] = bn.openNano('instanceResults');
-            [~, ~] = bn.generateConfig(100, 'uint16', 0.05, 0.99, 0, 1000, 1);
+            [~, ~] = bn.generateConfig(100, 'uint16', 'batch', 0.05, 0.99, 1, 0, 1000);
            
             
             %run Nano without data loaded
